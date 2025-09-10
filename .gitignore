@@ -1,0 +1,17 @@
+server_log.txt
+mysql_log.txt
+scriptfiles/server.ini
+gamemodes/bare.amx
+gamemodes/bare.pwn
+gamemodes/barron.amx
+gamemodes/barron.pwn
+gamemodes/bare.pwn
+gamemodes/grandlarc.amx
+gamemodes/grandlarc.pwn
+gamemodes/lvdm.amx
+gamemodes/lvdm.pwn
+gamemodes/rivershell.amx
+gamemodes/rivershell.pwn
+gamemodes/timertest.amx
+gamemodes/timertest.pwn
+filterscripts
