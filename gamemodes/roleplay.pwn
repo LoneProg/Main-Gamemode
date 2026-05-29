@@ -2017,12 +2017,12 @@ public Billboard_Load()
 	for (new i = 0; i < rows; i ++) if (i < MAX_BILLBOARDS)
 	{
 	    BillBoardData[i][bbExists] = true;
-	   	BillBoardData[i][bbID] = cache_get_value_int(i, "bbID");
+	   	cache_get_value_int(i, "bbID", BillBoardData[i][bbID]);
 
 		cache_get_value(i, "bbName", BillBoardData[i][bbName], 32);
         cache_get_value(i, "bbMessage", BillBoardData[i][bbMessage], 230);
 
-		cache_get_value_int(i, "bbOwner", BillBoardData[i][bbOwner]);
+		cache_get_value_int(i, "bbOwner", BillBoardData[i][bbOwner]);	
 		cache_get_value_int(i, "bbPrice", BillBoardData[i][bbPrice]);
 		cache_get_value_int(i, "bbRange", BillBoardData[i][bbRange]);
 		cache_get_value_float(i, "bbPosX", BillBoardData[i][bbPos][0]);
