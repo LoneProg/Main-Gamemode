@@ -40,18 +40,18 @@
 #define MAX_PLAYERS (100)
 
 #include <a_mysql> // R39 - download it here: http://forum.sa-mp.com/showthread.php?t=56564
-#include <foreach>
+#include <YSI_Data\y_foreach>
 #include <easyDialog>
 #include <eSelection>
 #include <progress2>
 #include <sscanf2>
 #include <streamer>
-#include <zcmd>
+#include <Pawn.CMD>
 
-#define SQL_HOSTNAME "23.88.73.88"
-#define SQL_USERNAME "u3213487_uh0BSEYp1T"
-#define SQL_DATABASE "s3213487_sc-rp"
-#define SQL_PASSWORD "jZmxZp.Ps@c2KjkaIjkTBoV!"
+#define SQL_HOSTNAME "localhost"
+#define SQL_USERNAME "root"
+#define SQL_DATABASE "scrp"
+#define SQL_PASSWORD "root"
 
 #define SERVER_NAME 	 "[0.3.7] South Central Roleplay - www.scroleplay.net"
 #define SERVER_URL 		 "www.scroleplay.net"
@@ -1696,7 +1696,7 @@ new const g_aFurnitureData[][e_FurnitureData] = {
 	{9, "Book", 2894}
 };
 
-native IsValidVehicle(vehicleid);
+// native IsValidVehicle(vehicleid);
 native WP_Hash(buffer[], len, const str[]);
 
 main() {
@@ -1750,14 +1750,14 @@ SQL_AttemptLogin(playerid, const password[])
 stock SQL_IsLogged(playerid) {
 	return (PlayerData[playerid][pLogged] && PlayerData[playerid][pCharacter] > 0);
 }
-stock Float:cache_get_field_float(row, const field_name[])
-{
-	new
-	    str[16];
+// stock Float:cache_get_value_float(row, const field_name[])
+// {
+// 	new
+// 	    str[16];
 
-	cache_get_field_content(row, field_name, str, g_iHandle, sizeof(str));
-	return floatstr(str);
-}
+// 	cache_get_value_float(row, field_name, str, g_iHandle, sizeof(str));
+// 	return floatstr(str);
+// }
 stock ViewBillboards(playerid)
 {
 	new
@@ -1979,10 +1979,8 @@ public OnJailAccount(index)
 	new
 		string[128],
 		name[24],
-	    rows,
-	    fields;
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 	GetPVarString(index, "OnJailAccount", name, 24);
 	//GetPVarString(index, "OnJailAccountReason", reason, 64);
 
@@ -2014,26 +2012,22 @@ public OnBillboardCreated(bizid)
 forward Billboard_Load();
 public Billboard_Load()
 {
-    new
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_BILLBOARDS)
 	{
 	    BillBoardData[i][bbExists] = true;
-	   	BillBoardData[i][bbID] = cache_get_field_int(i, "bbID");
+	   	BillBoardData[i][bbID] = cache_get_value_int(i, "bbID");
 
-		cache_get_field_content(i, "bbName", BillBoardData[i][bbName], g_iHandle, 32);
-        cache_get_field_content(i, "bbMessage", BillBoardData[i][bbMessage], g_iHandle, 230);
+		cache_get_value(i, "bbName", BillBoardData[i][bbName], 32);
+        cache_get_value(i, "bbMessage", BillBoardData[i][bbMessage], 230);
 
-		BillBoardData[i][bbOwner] = cache_get_field_int(i, "bbOwner");
-		BillBoardData[i][bbPrice] = cache_get_field_int(i, "bbPrice");
-		BillBoardData[i][bbRange] = cache_get_field_int(i, "bbRange");
-		BillBoardData[i][bbPos][0] = cache_get_field_float(i, "bbPosX");
-		BillBoardData[i][bbPos][1] = cache_get_field_float(i, "bbPosY");
-		BillBoardData[i][bbPos][2] = cache_get_field_float(i, "bbPosZ");
+		cache_get_value_int(i, "bbOwner", BillBoardData[i][bbOwner]);
+		cache_get_value_int(i, "bbPrice", BillBoardData[i][bbPrice]);
+		cache_get_value_int(i, "bbRange", BillBoardData[i][bbRange]);
+		cache_get_value_float(i, "bbPosX", BillBoardData[i][bbPos][0]);
+		cache_get_value_float(i, "bbPosY", BillBoardData[i][bbPos][1]);
+		cache_get_value_float(i, "bbPosZ", BillBoardData[i][bbPos][2]);
 		Billboard_Refresh(i);
 	}
 	return 1;
@@ -2045,16 +2039,14 @@ public OnViewBillboards(extraid, name[])
 	new
 	    string[1024],
 	    desc[128],
-	    rows,
-	    fields;
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (!rows)
 	    return SendErrorMessage(extraid, "No billboards found!");
 
 	for (new i = 0; i < rows; i ++) {
-	    cache_get_field_content(i, "bbName", desc, g_iHandle, sizeof(desc));
+	    cache_get_value(i, "bbName", desc, sizeof(desc));
 
 	    //format(string, sizeof(string), "%s{FFFFFF}%s ({FFBF00}%i{FFFFFF})\n", string, desc, i);
 	    format(string, sizeof(string), "%s{FFFFFF}Billboard ({FFBF00}%i{FFFFFF}) | %s | $%d\n", string, i, desc, BillBoardData[i][bbPrice]);
@@ -4317,12 +4309,12 @@ stock file_parse(File:handle, const field[], dest[], size = sizeof(dest))
 	return 0;
 }
 
-cache_get_field_int(row, const field_name[])
+cache_get_value_int(row, const field_name[])
 {
 	new
 	    str[12];
 
-	cache_get_field_content(row, field_name, str, g_iHandle, sizeof(str));
+	cache_get_value(row, field_name, str, sizeof(str));
 	return strval(str);
 }
 
@@ -6116,22 +6108,18 @@ Rack_Refresh(rackid)
 forward Detector_Load();
 public Detector_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_METAL_DETECTORS)
 	{
     	MetalDetectors[i][detectorExists] = 1;
-	    MetalDetectors[i][detectorID] = cache_get_field_int(i, "detectorID");
-	    MetalDetectors[i][detectorPos][0] = cache_get_field_float(i, "detectorX");
-	    MetalDetectors[i][detectorPos][1] = cache_get_field_float(i, "detectorY");
-	    MetalDetectors[i][detectorPos][2] = cache_get_field_float(i, "detectorZ");
-	    MetalDetectors[i][detectorPos][3] = cache_get_field_float(i, "detectorAngle");
-	    MetalDetectors[i][detectorInterior] = cache_get_field_int(i, "detectorInterior");
-	    MetalDetectors[i][detectorWorld] = cache_get_field_int(i, "detectorWorld");
+	    MetalDetectors[i][detectorID] = cache_get_value_int(i, "detectorID");
+	    cache_get_value_float(i, "detectorX", MetalDetectors[i][detectorPos][0]);
+	    cache_get_value_float(i, "detectorY", MetalDetectors[i][detectorPos][1]);
+	    cache_get_value_float(i, "detectorZ", MetalDetectors[i][detectorPos][2]);
+	    cache_get_value_float(i, "detectorAngle", MetalDetectors[i][detectorPos][3]);
+	    cache_get_value_int(i, "detectorInterior", MetalDetectors[i][detectorInterior]);
+	    cache_get_value_int(i, "detectorWorld", MetalDetectors[i][detectorWorld]);
 
 		Detector_Refresh(i);
 	}
@@ -6141,23 +6129,19 @@ public Detector_Load()
 forward Graffiti_Load();
 public Graffiti_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_GRAFFITI_POINTS)
 	{
-	    cache_get_field_content(i, "graffitiText", GraffitiData[i][graffitiText], g_iHandle, 64);
+	    cache_get_value(i, "graffitiText", GraffitiData[i][graffitiText], 64);
 
     	GraffitiData[i][graffitiExists] = 1;
-	    GraffitiData[i][graffitiID] = cache_get_field_int(i, "graffitiID");
-	    GraffitiData[i][graffitiPos][0] = cache_get_field_float(i, "graffitiX");
-	    GraffitiData[i][graffitiPos][1] = cache_get_field_float(i, "graffitiY");
-	    GraffitiData[i][graffitiPos][2] = cache_get_field_float(i, "graffitiZ");
-	    GraffitiData[i][graffitiPos][3] = cache_get_field_float(i, "graffitiAngle");
-	    GraffitiData[i][graffitiColor] = cache_get_field_int(i, "graffitiColor");
+	    GraffitiData[i][graffitiID] = cache_get_value_int(i, "graffitiID");
+	    cache_get_value_float(i, "graffitiX", GraffitiData[i][graffitiPos][0]);
+	    cache_get_value_float(i, "graffitiY", GraffitiData[i][graffitiPos][1]);
+	    cache_get_value_float(i, "graffitiZ", GraffitiData[i][graffitiPos][2]);
+	    cache_get_value_float(i, "graffitiAngle", GraffitiData[i][graffitiPos][3]);
+	    cache_get_value_int(i, "graffitiColor", GraffitiData[i][graffitiColor]);
 
 		Graffiti_Refresh(i);
 	}
@@ -6167,22 +6151,18 @@ public Graffiti_Load()
 forward Speed_Load();
 public Speed_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_SPEED_CAMERAS)
 	{
 	    SpeedData[i][speedExists] = true;
-	    SpeedData[i][speedID] = cache_get_field_int(i, "speedID");
-	    SpeedData[i][speedRange] = cache_get_field_float(i, "speedRange");
-	    SpeedData[i][speedLimit] = cache_get_field_float(i, "speedLimit");
-	    SpeedData[i][speedPos][0] = cache_get_field_float(i, "speedX");
-	    SpeedData[i][speedPos][1] = cache_get_field_float(i, "speedY");
-	    SpeedData[i][speedPos][2] = cache_get_field_float(i, "speedZ");
-	    SpeedData[i][speedPos][3] = cache_get_field_float(i, "speedAngle");
+	    SpeedData[i][speedID] = cache_get_value_int(i, "speedID");
+	    cache_get_value_float(i, "speedRange", SpeedData[i][speedRange]);
+	    cache_get_value_float(i, "speedLimit", SpeedData[i][speedLimit]);
+	    cache_get_value_float(i, "speedX", SpeedData[i][speedPos][0]);
+	    cache_get_value_float(i, "speedY", SpeedData[i][speedPos][1]);
+	    cache_get_value_float(i, "speedZ", SpeedData[i][speedPos][2]);
+	    cache_get_value_float(i, "speedAngle", SpeedData[i][speedPos][3]);
 
 	    Speed_Refresh(i);
 	}
@@ -6193,30 +6173,28 @@ forward Rack_Load();
 public Rack_Load()
 {
     static
-	    rows,
-	    fields,
 		str[24];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_WEAPON_RACKS)
 	{
 	    RackData[i][rackExists] = true;
-	    RackData[i][rackID] = cache_get_field_int(i, "rackID");
-	    RackData[i][rackHouse] = cache_get_field_int(i, "rackHouse");
-     	RackData[i][rackPos][0] = cache_get_field_float(i, "rackX");
-        RackData[i][rackPos][1] = cache_get_field_float(i, "rackY");
-        RackData[i][rackPos][2] = cache_get_field_float(i, "rackZ");
-        RackData[i][rackPos][3] = cache_get_field_float(i, "rackA");
-        RackData[i][rackInterior] = cache_get_field_int(i, "rackInterior");
-		RackData[i][rackWorld] = cache_get_field_int(i, "rackWorld");
+	    RackData[i][rackID] = cache_get_value_int(i, "rackID");
+	    RackData[i][rackHouse] = cache_get_value_int(i, "rackHouse");
+     	cache_get_value_float(i, "rackX", RackData[i][rackPos][0]);
+        cache_get_value_float(i, "rackY", RackData[i][rackPos][1]);
+        cache_get_value_float(i, "rackZ", RackData[i][rackPos][2]);
+        cache_get_value_float(i, "rackA", RackData[i][rackPos][3]);
+        RackData[i][rackInterior] = cache_get_value_int(i, "rackInterior");
+		RackData[i][rackWorld] = cache_get_value_int(i, "rackWorld");
 
 		for (new j = 0; j < 4; j ++) {
 		    format(str, 24, "rackWeapon%d", j + 1);
-		    RackData[i][rackWeapons][j] = cache_get_field_int(i, str);
+		    RackData[i][rackWeapons][j] = cache_get_value_int(i, str);
 
             format(str, 24, "rackAmmo%d", j + 1);
-		    RackData[i][rackAmmo][j] = cache_get_field_int(i, str);
+		    RackData[i][rackAmmo][j] = cache_get_value_int(i, str);
 		}
 		Rack_Refresh(i);
 	}
@@ -6226,23 +6204,19 @@ public Rack_Load()
 forward Vendor_Load();
 public Vendor_Load()
 {
-    static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_VENDORS)
 	{
 	    VendorData[i][vendorExists] = true;
-	    VendorData[i][vendorID] = cache_get_field_int(i, "vendorID");
-	    VendorData[i][vendorType] = cache_get_field_int(i, "vendorType");
-	    VendorData[i][vendorPos][0] = cache_get_field_float(i, "vendorX");
-        VendorData[i][vendorPos][1] = cache_get_field_float(i, "vendorY");
-        VendorData[i][vendorPos][2] = cache_get_field_float(i, "vendorZ");
-        VendorData[i][vendorPos][3] = cache_get_field_float(i, "vendorA");
-        VendorData[i][vendorInterior] = cache_get_field_int(i, "vendorInterior");
-		VendorData[i][vendorWorld] = cache_get_field_int(i, "vendorWorld");
+	    VendorData[i][vendorID] = cache_get_value_int(i, "vendorID");
+	    VendorData[i][vendorType] = cache_get_value_int(i, "vendorType");
+	    cache_get_value_float(i, "vendorX", VendorData[i][vendorPos][0]);
+        cache_get_value_float(i, "vendorY", VendorData[i][vendorPos][1]);
+        cache_get_value_float(i, "vendorZ", VendorData[i][vendorPos][2]);
+        cache_get_value_float(i, "vendorA", VendorData[i][vendorPos][3]);
+        cache_get_value_int(i, "vendorInterior", VendorData[i][vendorInterior]);
+		cache_get_value_int(i, "vendorWorld", VendorData[i][vendorWorld]);
 
 		Vendor_Refresh(i);
 	}
@@ -6252,24 +6226,20 @@ public Vendor_Load()
 forward Garbage_Load();
 public Garbage_Load()
 {
-    static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_GARBAGE_BINS)
 	{
 	    GarbageData[i][garbageExists] = true;
-	    GarbageData[i][garbageID] = cache_get_field_int(i, "garbageID");
-	    GarbageData[i][garbageModel] = cache_get_field_int(i, "garbageModel");
-	    GarbageData[i][garbageCapacity] = cache_get_field_int(i, "garbageCapacity");
-	    GarbageData[i][garbagePos][0] = cache_get_field_float(i, "garbageX");
-        GarbageData[i][garbagePos][1] = cache_get_field_float(i, "garbageY");
-        GarbageData[i][garbagePos][2] = cache_get_field_float(i, "garbageZ");
-        GarbageData[i][garbagePos][3] = cache_get_field_float(i, "garbageA");
-        GarbageData[i][garbageInterior] = cache_get_field_int(i, "garbageInterior");
-		GarbageData[i][garbageWorld] = cache_get_field_int(i, "garbageWorld");
+	    GarbageData[i][garbageID] = cache_get_value_int(i, "garbageID");
+	    GarbageData[i][garbageModel] = cache_get_value_int(i, "garbageModel");
+	    GarbageData[i][garbageCapacity] = cache_get_value_int(i, "garbageCapacity");
+	    GarbageData[i][garbagePos][0] = cache_get_value_float(i, "garbageX");
+        GarbageData[i][garbagePos][1] = cache_get_value_float(i, "garbageY");
+        GarbageData[i][garbagePos][2] = cache_get_value_float(i, "garbageZ");
+        GarbageData[i][garbagePos][3] = cache_get_value_float(i, "garbageA");
+        GarbageData[i][garbageInterior] = cache_get_value_int(i, "garbageInterior");
+		GarbageData[i][garbageWorld] = cache_get_value_int(i, "garbageWorld");
 
 		Garbage_Refresh(i);
 	}
@@ -6279,22 +6249,18 @@ public Garbage_Load()
 forward ATM_Load();
 public ATM_Load()
 {
-    static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_ATM_MACHINES)
 	{
 	    ATMData[i][atmExists] = true;
-	    ATMData[i][atmID] = cache_get_field_int(i, "atmID");
-	    ATMData[i][atmPos][0] = cache_get_field_float(i, "atmX");
-        ATMData[i][atmPos][1] = cache_get_field_float(i, "atmY");
-        ATMData[i][atmPos][2] = cache_get_field_float(i, "atmZ");
-        ATMData[i][atmPos][3] = cache_get_field_float(i, "atmA");
-        ATMData[i][atmInterior] = cache_get_field_int(i, "atmInterior");
-		ATMData[i][atmWorld] = cache_get_field_int(i, "atmWorld");
+	    ATMData[i][atmID] = cache_get_value_int(i, "atmID");
+	    ATMData[i][atmPos][0] = cache_get_value_float(i, "atmX");
+        ATMData[i][atmPos][1] = cache_get_value_float(i, "atmY");
+        ATMData[i][atmPos][2] = cache_get_value_float(i, "atmZ");
+        ATMData[i][atmPos][3] = cache_get_value_float(i, "atmA");
+        ATMData[i][atmInterior] = cache_get_value_int(i, "atmInterior");
+		ATMData[i][atmWorld] = cache_get_value_int(i, "atmWorld");
 
 		ATM_Refresh(i);
 	}
@@ -6304,23 +6270,19 @@ public ATM_Load()
 forward Impound_Load();
 public Impound_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_IMPOUND_LOTS)
 	{
 	    ImpoundData[i][impoundExists] = true;
-	    ImpoundData[i][impoundID] = cache_get_field_int(i, "impoundID");
-	    ImpoundData[i][impoundLot][0] = cache_get_field_float(i, "impoundLotX");
-        ImpoundData[i][impoundLot][1] = cache_get_field_float(i, "impoundLotY");
-        ImpoundData[i][impoundLot][2] = cache_get_field_float(i, "impoundLotZ");
-        ImpoundData[i][impoundRelease][0] = cache_get_field_float(i, "impoundReleaseX");
-        ImpoundData[i][impoundRelease][1] = cache_get_field_float(i, "impoundReleaseY");
-        ImpoundData[i][impoundRelease][2] = cache_get_field_float(i, "impoundReleaseZ");
-        ImpoundData[i][impoundRelease][3] = cache_get_field_float(i, "impoundReleaseA");
+	    ImpoundData[i][impoundID] = cache_get_value_int(i, "impoundID");
+	    ImpoundData[i][impoundLot][0] = cache_get_value_float(i, "impoundLotX");
+        ImpoundData[i][impoundLot][1] = cache_get_value_float(i, "impoundLotY");
+        ImpoundData[i][impoundLot][2] = cache_get_value_float(i, "impoundLotZ");
+        ImpoundData[i][impoundRelease][0] = cache_get_value_float(i, "impoundReleaseX");
+        ImpoundData[i][impoundRelease][1] = cache_get_value_float(i, "impoundReleaseY");
+        ImpoundData[i][impoundRelease][2] = cache_get_value_float(i, "impoundReleaseZ");
+        ImpoundData[i][impoundRelease][3] = cache_get_value_float(i, "impoundReleaseA");
 
 		Impound_Refresh(i);
 	}
@@ -6331,24 +6293,22 @@ forward Backpack_Load();
 public Backpack_Load()
 {
     static
-	    rows,
-	    fields,
 		str[64];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_BACKPACKS)
 	{
 	    BackpackData[i][backpackExists] = true;
-	    BackpackData[i][backpackID] = cache_get_field_int(i, "backpackID");
-	    BackpackData[i][backpackPlayer] = cache_get_field_int(i, "backpackPlayer");
-	    BackpackData[i][backpackHouse] = cache_get_field_int(i, "backpackHouse");
-	    BackpackData[i][backpackVehicle] = cache_get_field_int(i, "backpackVehicle");
-	    BackpackData[i][backpackPos][0] = cache_get_field_float(i, "backpackX");
-	    BackpackData[i][backpackPos][1] = cache_get_field_float(i, "backpackY");
-	    BackpackData[i][backpackPos][2] = cache_get_field_float(i, "backpackZ");
-	    BackpackData[i][backpackInterior] = cache_get_field_int(i, "backpackInterior");
-	    BackpackData[i][backpackWorld] = cache_get_field_int(i, "backpackWorld");
+	    BackpackData[i][backpackID] = cache_get_value_int(i, "backpackID");
+	    BackpackData[i][backpackPlayer] = cache_get_value_int(i, "backpackPlayer");
+	    BackpackData[i][backpackHouse] = cache_get_value_int(i, "backpackHouse");
+	    BackpackData[i][backpackVehicle] = cache_get_value_int(i, "backpackVehicle");
+	    BackpackData[i][backpackPos][0] = cache_get_value_float(i, "backpackX");
+	    BackpackData[i][backpackPos][1] = cache_get_value_float(i, "backpackY");
+	    BackpackData[i][backpackPos][2] = cache_get_value_float(i, "backpackZ");
+	    BackpackData[i][backpackInterior] = cache_get_value_int(i, "backpackInterior");
+	    BackpackData[i][backpackWorld] = cache_get_value_int(i, "backpackWorld");
 
 	    if (!BackpackData[i][backpackPlayer]) {
 	        Backpack_Refresh(i);
@@ -6365,43 +6325,39 @@ public Backpack_Load()
 forward Gate_Load();
 public Gate_Load()
 {
-    static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_GATES)
 	{
 	    GateData[i][gateExists] = true;
 	    GateData[i][gateOpened] = false;
 
-	    GateData[i][gateID] = cache_get_field_int(i, "gateID");
-	    GateData[i][gateModel] = cache_get_field_int(i, "gateModel");
-	    GateData[i][gateSpeed] = cache_get_field_float(i, "gateSpeed");
-	    GateData[i][gateRadius] = cache_get_field_float(i, "gateRadius");
-	    GateData[i][gateTime] = cache_get_field_int(i, "gateTime");
-	    GateData[i][gateInterior] = cache_get_field_int(i, "gateInterior");
-	    GateData[i][gateWorld] = cache_get_field_int(i, "gateWorld");
+	    GateData[i][gateID] = cache_get_value_int(i, "gateID");
+	    GateData[i][gateModel] = cache_get_value_int(i, "gateModel");
+	    GateData[i][gateSpeed] = cache_get_value_float(i, "gateSpeed");
+	    GateData[i][gateRadius] = cache_get_value_float(i, "gateRadius");
+	    GateData[i][gateTime] = cache_get_value_int(i, "gateTime");
+	    GateData[i][gateInterior] = cache_get_value_int(i, "gateInterior");
+	    GateData[i][gateWorld] = cache_get_value_int(i, "gateWorld");
 
-	    GateData[i][gatePos][0] = cache_get_field_float(i, "gateX");
-	    GateData[i][gatePos][1] = cache_get_field_float(i, "gateY");
-	    GateData[i][gatePos][2] = cache_get_field_float(i, "gateZ");
-	    GateData[i][gatePos][3] = cache_get_field_float(i, "gateRX");
-	    GateData[i][gatePos][4] = cache_get_field_float(i, "gateRY");
-	    GateData[i][gatePos][5] = cache_get_field_float(i, "gateRZ");
+	    GateData[i][gatePos][0] = cache_get_value_float(i, "gateX");
+	    GateData[i][gatePos][1] = cache_get_value_float(i, "gateY");
+	    GateData[i][gatePos][2] = cache_get_value_float(i, "gateZ");
+	    GateData[i][gatePos][3] = cache_get_value_float(i, "gateRX");
+	    GateData[i][gatePos][4] = cache_get_value_float(i, "gateRY");
+	    GateData[i][gatePos][5] = cache_get_value_float(i, "gateRZ");
 
-        GateData[i][gateMove][0] = cache_get_field_float(i, "gateMoveX");
-	    GateData[i][gateMove][1] = cache_get_field_float(i, "gateMoveY");
-	    GateData[i][gateMove][2] = cache_get_field_float(i, "gateMoveZ");
-	    GateData[i][gateMove][3] = cache_get_field_float(i, "gateMoveRX");
-	    GateData[i][gateMove][4] = cache_get_field_float(i, "gateMoveRY");
-	    GateData[i][gateMove][5] = cache_get_field_float(i, "gateMoveRZ");
+        GateData[i][gateMove][0] = cache_get_value_float(i, "gateMoveX");
+	    GateData[i][gateMove][1] = cache_get_value_float(i, "gateMoveY");
+	    GateData[i][gateMove][2] = cache_get_value_float(i, "gateMoveZ");
+	    GateData[i][gateMove][3] = cache_get_value_float(i, "gateMoveRX");
+	    GateData[i][gateMove][4] = cache_get_value_float(i, "gateMoveRY");
+	    GateData[i][gateMove][5] = cache_get_value_float(i, "gateMoveRZ");
 
-        GateData[i][gateLinkID] = cache_get_field_int(i, "gateLinkID");
-	    GateData[i][gateFaction] = cache_get_field_int(i, "gateFaction");
+        GateData[i][gateLinkID] = cache_get_value_int(i, "gateLinkID");
+	    GateData[i][gateFaction] = cache_get_value_int(i, "gateFaction");
 
-	    cache_get_field_content(i, "gatePass", GateData[i][gatePass], g_iHandle, 32);
+	    cache_get_value(i, "gatePass", GateData[i][gatePass], 32);
 
 	    GateData[i][gateObject] = CreateDynamicObject(GateData[i][gateModel], GateData[i][gatePos][0], GateData[i][gatePos][1], GateData[i][gatePos][2], GateData[i][gatePos][3], GateData[i][gatePos][4], GateData[i][gatePos][5], GateData[i][gateWorld], GateData[i][gateInterior]);
 	}
@@ -6411,22 +6367,18 @@ public Gate_Load()
 forward Arrest_Load();
 public Arrest_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_ARREST_POINTS)
 	{
 	    ArrestData[i][arrestExists] = true;
 
-	    ArrestData[i][arrestID] = cache_get_field_int(i, "arrestID");
-	    ArrestData[i][arrestPos][0] = cache_get_field_float(i, "arrestX");
-	    ArrestData[i][arrestPos][1] = cache_get_field_float(i, "arrestY");
-	    ArrestData[i][arrestPos][2] = cache_get_field_float(i, "arrestZ");
-	    ArrestData[i][arrestInterior] = cache_get_field_int(i, "arrestInterior");
-	    ArrestData[i][arrestWorld] = cache_get_field_int(i, "arrestWorld");
+	    ArrestData[i][arrestID] = cache_get_value_int(i, "arrestID");
+	    ArrestData[i][arrestPos][0] = cache_get_value_float(i, "arrestX");
+	    ArrestData[i][arrestPos][1] = cache_get_value_float(i, "arrestY");
+	    ArrestData[i][arrestPos][2] = cache_get_value_float(i, "arrestZ");
+	    ArrestData[i][arrestInterior] = cache_get_value_int(i, "arrestInterior");
+	    ArrestData[i][arrestWorld] = cache_get_value_int(i, "arrestWorld");
 
 	    Arrest_Refresh(i);
 	}
@@ -6437,53 +6389,51 @@ forward Faction_Load();
 public Faction_Load()
 {
 	static
-	    rows,
-	    fields,
 		str[32];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_FACTIONS)
 	{
 	    FactionData[i][factionExists] = true;
-	    FactionData[i][factionID] = cache_get_field_int(i, "factionID");
+	    FactionData[i][factionID] = cache_get_value_int(i, "factionID");
 
-	    cache_get_field_content(i, "factionName", FactionData[i][factionName], g_iHandle, 32);
+	    cache_get_value(i, "factionName", FactionData[i][factionName], 32);
 
-	    FactionData[i][factionColor] = cache_get_field_int(i, "factionColor");
-	    FactionData[i][factionType] = cache_get_field_int(i, "factionType");
-	    FactionData[i][factionRanks] = cache_get_field_int(i, "factionRanks");
-	    FactionData[i][factionLockerPos][0] = cache_get_field_float(i, "factionLockerX");
-	    FactionData[i][factionLockerPos][1] = cache_get_field_float(i, "factionLockerY");
-	    FactionData[i][factionLockerPos][2] = cache_get_field_float(i, "factionLockerZ");
-	    FactionData[i][factionLockerInt] = cache_get_field_int(i, "factionLockerInt");
-	    FactionData[i][factionLockerWorld] = cache_get_field_int(i, "factionLockerWorld");
+	    FactionData[i][factionColor] = cache_get_value_int(i, "factionColor");
+	    FactionData[i][factionType] = cache_get_value_int(i, "factionType");
+	    FactionData[i][factionRanks] = cache_get_value_int(i, "factionRanks");
+	    FactionData[i][factionLockerPos][0] = cache_get_value_float(i, "factionLockerX");
+	    FactionData[i][factionLockerPos][1] = cache_get_value_float(i, "factionLockerY");
+	    FactionData[i][factionLockerPos][2] = cache_get_value_float(i, "factionLockerZ");
+	    FactionData[i][factionLockerInt] = cache_get_value_int(i, "factionLockerInt");
+	    FactionData[i][factionLockerWorld] = cache_get_value_int(i, "factionLockerWorld");
 
 		//Spawning
-		FactionData[i][SpawnX] = cache_get_field_float(i, "SpawnX");
-	 	FactionData[i][SpawnY] = cache_get_field_float(i, "SpawnY");
-   		FactionData[i][SpawnZ] = cache_get_field_float(i, "SpawnZ");
-		FactionData[i][SpawnInterior] = cache_get_field_int(i, "SpawnInterior");
-  		FactionData[i][SpawnVW] = cache_get_field_int(i, "SpawnVW");
+		FactionData[i][SpawnX] = cache_get_value_float(i, "SpawnX");
+	 	FactionData[i][SpawnY] = cache_get_value_float(i, "SpawnY");
+   		FactionData[i][SpawnZ] = cache_get_value_float(i, "SpawnZ");
+		FactionData[i][SpawnInterior] = cache_get_value_int(i, "SpawnInterior");
+  		FactionData[i][SpawnVW] = cache_get_value_int(i, "SpawnVW");
 
 	    for (new j = 0; j < 8; j ++) {
 	        format(str, sizeof(str), "factionSkin%d", j + 1);
 
-	        FactionData[i][factionSkins][j] = cache_get_field_int(i, str);
+	        FactionData[i][factionSkins][j] = cache_get_value_int(i, str);
 		}
         for (new j = 0; j < 10; j ++) {
 	        format(str, sizeof(str), "factionWeapon%d", j + 1);
 
-	        FactionData[i][factionWeapons][j] = cache_get_field_int(i, str);
+	        FactionData[i][factionWeapons][j] = cache_get_value_int(i, str);
 
 	        format(str, sizeof(str), "factionAmmo%d", j + 1);
 
-			FactionData[i][factionAmmo][j] = cache_get_field_int(i, str);
+			FactionData[i][factionAmmo][j] = cache_get_value_int(i, str);
 		}
 		for (new j = 0; j < 15; j ++) {
 		    format(str, sizeof(str), "factionRank%d", j + 1);
 
-		    cache_get_field_content(i, str, FactionRanks[i][j], g_iHandle, 32);
+		    cache_get_value(i, str, FactionRanks[i][j], 32);
 		}
 		Faction_Refresh(i);
 	}
@@ -6493,24 +6443,20 @@ public Faction_Load()
 forward Plant_Load();
 public Plant_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_DRUG_PLANTS)
 	{
 	    PlantData[i][plantExists] = true;
-	    PlantData[i][plantID] = cache_get_field_int(i, "plantID");
-	    PlantData[i][plantType] = cache_get_field_int(i, "plantType");
-	    PlantData[i][plantDrugs] = cache_get_field_int(i, "plantDrugs");
-	    PlantData[i][plantPos][0] = cache_get_field_float(i, "plantX");
-	    PlantData[i][plantPos][1] = cache_get_field_float(i, "plantY");
-	    PlantData[i][plantPos][2] = cache_get_field_float(i, "plantZ");
-	    PlantData[i][plantPos][3] = cache_get_field_float(i, "plantA");
-	    PlantData[i][plantInterior] = cache_get_field_int(i, "plantInterior");
-	    PlantData[i][plantWorld] = cache_get_field_int(i, "plantWorld");
+	    PlantData[i][plantID] = cache_get_value_int(i, "plantID");
+	    PlantData[i][plantType] = cache_get_value_int(i, "plantType");
+	    PlantData[i][plantDrugs] = cache_get_value_int(i, "plantDrugs");
+	    PlantData[i][plantPos][0] = cache_get_value_float(i, "plantX");
+	    PlantData[i][plantPos][1] = cache_get_value_float(i, "plantY");
+	    PlantData[i][plantPos][2] = cache_get_value_float(i, "plantZ");
+	    PlantData[i][plantPos][3] = cache_get_value_float(i, "plantA");
+	    PlantData[i][plantInterior] = cache_get_value_int(i, "plantInterior");
+	    PlantData[i][plantWorld] = cache_get_value_int(i, "plantWorld");
 
 		Plant_Refresh(i);
 	}
@@ -6520,23 +6466,19 @@ public Plant_Load()
 forward Crate_Load();
 public Crate_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_CRATES)
 	{
 	    CrateData[i][crateExists] = true;
-	    CrateData[i][crateID] = cache_get_field_int(i, "crateID");
-	    CrateData[i][crateType] = cache_get_field_int(i, "crateType");
-	    CrateData[i][cratePos][0] = cache_get_field_float(i, "crateX");
-	    CrateData[i][cratePos][1] = cache_get_field_float(i, "crateY");
-	    CrateData[i][cratePos][2] = cache_get_field_float(i, "crateZ");
-	    CrateData[i][cratePos][3] = cache_get_field_float(i, "crateA");
-	    CrateData[i][crateInterior] = cache_get_field_int(i, "crateInterior");
-	    CrateData[i][crateWorld] = cache_get_field_int(i, "crateWorld");
+	    CrateData[i][crateID] = cache_get_value_int(i, "crateID");
+	    CrateData[i][crateType] = cache_get_value_int(i, "crateType");
+	    CrateData[i][cratePos][0] = cache_get_value_float(i, "crateX");
+	    CrateData[i][cratePos][1] = cache_get_value_float(i, "crateY");
+	    CrateData[i][cratePos][2] = cache_get_value_float(i, "crateZ");
+	    CrateData[i][cratePos][3] = cache_get_value_float(i, "crateA");
+	    CrateData[i][crateInterior] = cache_get_value_int(i, "crateInterior");
+	    CrateData[i][crateWorld] = cache_get_value_int(i, "crateWorld");
 		CrateData[i][crateVehicle] = INVALID_VEHICLE_ID;
 
 		Crate_Refresh(i);
@@ -6547,30 +6489,26 @@ public Crate_Load()
 forward Job_Load();
 public Job_Load()
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
     for (new i = 0; i < rows; i ++) if (i < MAX_DYNAMIC_JOBS)
 	{
 	    JobData[i][jobExists] = true;
-	    JobData[i][jobID] = cache_get_field_int(i, "jobID");
-	    JobData[i][jobType] = cache_get_field_int(i, "jobType");
-	    JobData[i][jobPos][0] = cache_get_field_float(i, "jobPosX");
-	    JobData[i][jobPos][1] = cache_get_field_float(i, "jobPosY");
-	    JobData[i][jobPos][2] = cache_get_field_float(i, "jobPosZ");
-	    JobData[i][jobInterior] = cache_get_field_int(i, "jobInterior");
-	    JobData[i][jobWorld] = cache_get_field_int(i, "jobWorld");
-        JobData[i][jobPoint][0] = cache_get_field_float(i, "jobPointX");
-	    JobData[i][jobPoint][1] = cache_get_field_float(i, "jobPointY");
-	    JobData[i][jobPoint][2] = cache_get_field_float(i, "jobPointZ");
-	    JobData[i][jobDeliver][0] = cache_get_field_float(i, "jobDeliverX");
-	    JobData[i][jobDeliver][1] = cache_get_field_float(i, "jobDeliverY");
-	    JobData[i][jobDeliver][2] = cache_get_field_float(i, "jobDeliverZ");
-	    JobData[i][jobPointInt] = cache_get_field_int(i, "jobPointInt");
-	    JobData[i][jobPointWorld] = cache_get_field_int(i, "jobPointWorld");
+	    JobData[i][jobID] = cache_get_value_int(i, "jobID");
+	    JobData[i][jobType] = cache_get_value_int(i, "jobType");
+	    JobData[i][jobPos][0] = cache_get_value_float(i, "jobPosX");
+	    JobData[i][jobPos][1] = cache_get_value_float(i, "jobPosY");
+	    JobData[i][jobPos][2] = cache_get_value_float(i, "jobPosZ");
+	    JobData[i][jobInterior] = cache_get_value_int(i, "jobInterior");
+	    JobData[i][jobWorld] = cache_get_value_int(i, "jobWorld");
+        JobData[i][jobPoint][0] = cache_get_value_float(i, "jobPointX");
+	    JobData[i][jobPoint][1] = cache_get_value_float(i, "jobPointY");
+	    JobData[i][jobPoint][2] = cache_get_value_float(i, "jobPointZ");
+	    JobData[i][jobDeliver][0] = cache_get_value_float(i, "jobDeliverX");
+	    JobData[i][jobDeliver][1] = cache_get_value_float(i, "jobDeliverY");
+	    JobData[i][jobDeliver][2] = cache_get_value_float(i, "jobDeliverZ");
+	    JobData[i][jobPointInt] = cache_get_value_int(i, "jobPointInt");
+	    JobData[i][jobPointWorld] = cache_get_value_int(i, "jobPointWorld");
 
  	    Job_Refresh(i);
 	}
@@ -6580,36 +6518,32 @@ public Job_Load()
 forward Entrance_Load();
 public Entrance_Load()
 {
-    static
-	    rows,
-	    fields;
-
-    cache_get_data(rows, fields, g_iHandle);
+    new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_ENTRANCES)
 	{
 	    EntranceData[i][entranceExists] = true;
-    	EntranceData[i][entranceID] = cache_get_field_int(i, "entranceID");
+    	EntranceData[i][entranceID] = cache_get_value_int(i, "entranceID");
 
-		cache_get_field_content(i, "entranceName", EntranceData[i][entranceName], g_iHandle, 32);
-		cache_get_field_content(i, "entrancePass", EntranceData[i][entrancePass], g_iHandle, 32);
+		cache_get_value(i, "entranceName", EntranceData[i][entranceName], 32);
+		cache_get_value(i, "entrancePass", EntranceData[i][entrancePass], 32);
 
-	    EntranceData[i][entranceIcon] = cache_get_field_int(i, "entranceIcon");
-	    EntranceData[i][entranceLocked] = cache_get_field_int(i, "entranceLocked");
-	    EntranceData[i][entrancePos][0] = cache_get_field_float(i, "entrancePosX");
-	    EntranceData[i][entrancePos][1] = cache_get_field_float(i, "entrancePosY");
-	    EntranceData[i][entrancePos][2] = cache_get_field_float(i, "entrancePosZ");
-	    EntranceData[i][entrancePos][3] = cache_get_field_float(i, "entrancePosA");
-	    EntranceData[i][entranceInt][0] = cache_get_field_float(i, "entranceIntX");
-	    EntranceData[i][entranceInt][1] = cache_get_field_float(i, "entranceIntY");
-	    EntranceData[i][entranceInt][2] = cache_get_field_float(i, "entranceIntZ");
-	    EntranceData[i][entranceInt][3] = cache_get_field_float(i, "entranceIntA");
-	    EntranceData[i][entranceInterior] = cache_get_field_int(i, "entranceInterior");
-	    EntranceData[i][entranceExterior] = cache_get_field_int(i, "entranceExterior");
-	    EntranceData[i][entranceExteriorVW] = cache_get_field_int(i, "entranceExteriorVW");
-	    EntranceData[i][entranceType] = cache_get_field_int(i, "entranceType");
-	    EntranceData[i][entranceCustom] = cache_get_field_int(i, "entranceCustom");
-	    EntranceData[i][entranceWorld] = cache_get_field_int(i, "entranceWorld");
+	    EntranceData[i][entranceIcon] = cache_get_value_int(i, "entranceIcon");
+	    EntranceData[i][entranceLocked] = cache_get_value_int(i, "entranceLocked");
+	    EntranceData[i][entrancePos][0] = cache_get_value_float(i, "entrancePosX");
+	    EntranceData[i][entrancePos][1] = cache_get_value_float(i, "entrancePosY");
+	    EntranceData[i][entrancePos][2] = cache_get_value_float(i, "entrancePosZ");
+	    EntranceData[i][entrancePos][3] = cache_get_value_float(i, "entrancePosA");
+	    EntranceData[i][entranceInt][0] = cache_get_value_float(i, "entranceIntX");
+	    EntranceData[i][entranceInt][1] = cache_get_value_float(i, "entranceIntY");
+	    EntranceData[i][entranceInt][2] = cache_get_value_float(i, "entranceIntZ");
+	    EntranceData[i][entranceInt][3] = cache_get_value_float(i, "entranceIntA");
+	    EntranceData[i][entranceInterior] = cache_get_value_int(i, "entranceInterior");
+	    EntranceData[i][entranceExterior] = cache_get_value_int(i, "entranceExterior");
+	    EntranceData[i][entranceExteriorVW] = cache_get_value_int(i, "entranceExteriorVW");
+	    EntranceData[i][entranceType] = cache_get_value_int(i, "entranceType");
+	    EntranceData[i][entranceCustom] = cache_get_value_int(i, "entranceCustom");
+	    EntranceData[i][entranceWorld] = cache_get_value_int(i, "entranceWorld");
 
 		if (EntranceData[i][entranceType] == 3)
 		    CreateForklifts(i);
@@ -6622,28 +6556,24 @@ public Entrance_Load()
 forward Dropped_Load();
 public Dropped_Load()
 {
-	static
-	    rows,
-	    fields;
-
-    cache_get_data(rows, fields, g_iHandle);
+    new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_DROPPED_ITEMS)
 	{
-	    DroppedItems[i][droppedID] = cache_get_field_int(i, "ID");
+	    DroppedItems[i][droppedID] = cache_get_value_int(i, "ID");
 
-		cache_get_field_content(i, "itemName", DroppedItems[i][droppedItem], g_iHandle, 32);
-		cache_get_field_content(i, "itemPlayer", DroppedItems[i][droppedPlayer], g_iHandle, 24);
+		cache_get_value(i, "itemName", DroppedItems[i][droppedItem], 32);
+		cache_get_value(i, "itemPlayer", DroppedItems[i][droppedPlayer], 24);
 
-		DroppedItems[i][droppedModel] = cache_get_field_int(i, "itemModel");
-		DroppedItems[i][droppedQuantity] = cache_get_field_int(i, "itemQuantity");
-		DroppedItems[i][droppedWeapon] = cache_get_field_int(i, "itemWeapon");
-		DroppedItems[i][droppedAmmo] = cache_get_field_int(i, "itemAmmo");
-		DroppedItems[i][droppedPos][0] = cache_get_field_float(i, "itemX");
-		DroppedItems[i][droppedPos][1] = cache_get_field_float(i, "itemY");
-		DroppedItems[i][droppedPos][2] = cache_get_field_float(i, "itemZ");
-		DroppedItems[i][droppedInt] = cache_get_field_int(i, "itemInt");
-		DroppedItems[i][droppedWorld] = cache_get_field_int(i, "itemWorld");
+		DroppedItems[i][droppedModel] = cache_get_value_int(i, "itemModel");
+		DroppedItems[i][droppedQuantity] = cache_get_value_int(i, "itemQuantity");
+		DroppedItems[i][droppedWeapon] = cache_get_value_int(i, "itemWeapon");
+		DroppedItems[i][droppedAmmo] = cache_get_value_int(i, "itemAmmo");
+		DroppedItems[i][droppedPos][0] = cache_get_value_float(i, "itemX");
+		DroppedItems[i][droppedPos][1] = cache_get_value_float(i, "itemY");
+		DroppedItems[i][droppedPos][2] = cache_get_value_float(i, "itemZ");
+		DroppedItems[i][droppedInt] = cache_get_value_int(i, "itemInt");
+		DroppedItems[i][droppedWorld] = cache_get_value_int(i, "itemWorld");
 
 		if (IsWeaponModel(DroppedItems[i][droppedModel])) {
     	   	DroppedItems[i][droppedObject] = CreateDynamicObject(DroppedItems[i][droppedModel], DroppedItems[i][droppedPos][0], DroppedItems[i][droppedPos][1], DroppedItems[i][droppedPos][2], 93.7, 120.0, 120.0, DroppedItems[i][droppedWorld], DroppedItems[i][droppedInt]);
@@ -6659,50 +6589,48 @@ forward Business_Load();
 public Business_Load()
 {
     static
-	    rows,
-	    fields,
 		str[64];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_BUSINESSES)
 	{
 	    BusinessData[i][bizExists] = true;
-	    BusinessData[i][bizID] = cache_get_field_int(i, "bizID");
+	    BusinessData[i][bizID] = cache_get_value_int(i, "bizID");
 
-		cache_get_field_content(i, "bizName", BusinessData[i][bizName], g_iHandle, 32);
-        cache_get_field_content(i, "bizMessage", BusinessData[i][bizMessage], g_iHandle, 128);
+		cache_get_value(i, "bizName", BusinessData[i][bizName], 32);
+        cache_get_value(i, "bizMessage", BusinessData[i][bizMessage], 128);
 
-		BusinessData[i][bizOwner] = cache_get_field_int(i, "bizOwner");
-		BusinessData[i][bizType] = cache_get_field_int(i, "bizType");
-		BusinessData[i][bizPrice] = cache_get_field_int(i, "bizPrice");
-		BusinessData[i][bizPos][0] = cache_get_field_float(i, "bizPosX");
-		BusinessData[i][bizPos][1] = cache_get_field_float(i, "bizPosY");
-		BusinessData[i][bizPos][2] = cache_get_field_float(i, "bizPosZ");
-		BusinessData[i][bizPos][3] = cache_get_field_float(i, "bizPosA");
-		BusinessData[i][bizInt][0] = cache_get_field_float(i, "bizIntX");
-		BusinessData[i][bizInt][1] = cache_get_field_float(i, "bizIntY");
-		BusinessData[i][bizInt][2] = cache_get_field_float(i, "bizIntZ");
-		BusinessData[i][bizInt][3] = cache_get_field_float(i, "bizIntA");
-		BusinessData[i][bizSpawn][0] = cache_get_field_float(i, "bizSpawnX");
-		BusinessData[i][bizSpawn][1] = cache_get_field_float(i, "bizSpawnY");
-		BusinessData[i][bizSpawn][2] = cache_get_field_float(i, "bizSpawnZ");
-		BusinessData[i][bizSpawn][3] = cache_get_field_float(i, "bizSpawnA");
-		BusinessData[i][bizDeliver][0] = cache_get_field_float(i, "bizDeliverX");
-		BusinessData[i][bizDeliver][1] = cache_get_field_float(i, "bizDeliverY");
-		BusinessData[i][bizDeliver][2] = cache_get_field_float(i, "bizDeliverZ");
-		BusinessData[i][bizShipment] = cache_get_field_int(i, "bizShipment");
-		BusinessData[i][bizInterior] = cache_get_field_int(i, "bizInterior");
-		BusinessData[i][bizExterior] = cache_get_field_int(i, "bizExterior");
-		BusinessData[i][bizExteriorVW] = cache_get_field_int(i, "bizExteriorVW");
-		BusinessData[i][bizLocked] = cache_get_field_int(i, "bizLocked");
-		BusinessData[i][bizVault] = cache_get_field_int(i, "bizVault");
-		BusinessData[i][bizProducts] = cache_get_field_int(i, "bizProducts");
+		BusinessData[i][bizOwner] = cache_get_value_int(i, "bizOwner");
+		BusinessData[i][bizType] = cache_get_value_int(i, "bizType");
+		BusinessData[i][bizPrice] = cache_get_value_int(i, "bizPrice");
+		BusinessData[i][bizPos][0] = cache_get_value_float(i, "bizPosX");
+		BusinessData[i][bizPos][1] = cache_get_value_float(i, "bizPosY");
+		BusinessData[i][bizPos][2] = cache_get_value_float(i, "bizPosZ");
+		BusinessData[i][bizPos][3] = cache_get_value_float(i, "bizPosA");
+		BusinessData[i][bizInt][0] = cache_get_value_float(i, "bizIntX");
+		BusinessData[i][bizInt][1] = cache_get_value_float(i, "bizIntY");
+		BusinessData[i][bizInt][2] = cache_get_value_float(i, "bizIntZ");
+		BusinessData[i][bizInt][3] = cache_get_value_float(i, "bizIntA");
+		BusinessData[i][bizSpawn][0] = cache_get_value_float(i, "bizSpawnX");
+		BusinessData[i][bizSpawn][1] = cache_get_value_float(i, "bizSpawnY");
+		BusinessData[i][bizSpawn][2] = cache_get_value_float(i, "bizSpawnZ");
+		BusinessData[i][bizSpawn][3] = cache_get_value_float(i, "bizSpawnA");
+		BusinessData[i][bizDeliver][0] = cache_get_value_float(i, "bizDeliverX");
+		BusinessData[i][bizDeliver][1] = cache_get_value_float(i, "bizDeliverY");
+		BusinessData[i][bizDeliver][2] = cache_get_value_float(i, "bizDeliverZ");
+		BusinessData[i][bizShipment] = cache_get_value_int(i, "bizShipment");
+		BusinessData[i][bizInterior] = cache_get_value_int(i, "bizInterior");
+		BusinessData[i][bizExterior] = cache_get_value_int(i, "bizExterior");
+		BusinessData[i][bizExteriorVW] = cache_get_value_int(i, "bizExteriorVW");
+		BusinessData[i][bizLocked] = cache_get_value_int(i, "bizLocked");
+		BusinessData[i][bizVault] = cache_get_value_int(i, "bizVault");
+		BusinessData[i][bizProducts] = cache_get_value_int(i, "bizProducts");
 
 		for (new j = 0; j < 20; j ++)
 		{
 			format(str, 32, "bizPrice%d", j + 1);
-			BusinessData[i][bizPrices][j] = cache_get_field_int(i, str);
+			BusinessData[i][bizPrices][j] = cache_get_value_int(i, str);
 		}
 		Business_Refresh(i);
 	}
@@ -6726,44 +6654,42 @@ forward House_Load();
 public House_Load()
 {
 	static
-	    rows,
-	    fields,
 		str[128];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_HOUSES)
 	{
 		HouseData[i][houseExists] = true;
 		HouseData[i][houseLights] = false;
 
-		HouseData[i][houseID] = cache_get_field_int(i, "houseID");
-		HouseData[i][houseOwner] = cache_get_field_int(i, "houseOwner");
-		HouseData[i][housePrice] = cache_get_field_int(i, "housePrice");
+		HouseData[i][houseID] = cache_get_value_int(i, "houseID");
+		HouseData[i][houseOwner] = cache_get_value_int(i, "houseOwner");
+		HouseData[i][housePrice] = cache_get_value_int(i, "housePrice");
 
-		cache_get_field_content(i, "houseAddress", HouseData[i][houseAddress], g_iHandle, 32);
+		cache_get_value(i, "houseAddress", HouseData[i][houseAddress], 32);
 
-		HouseData[i][housePos][0] = cache_get_field_float(i, "housePosX");
-		HouseData[i][housePos][1] = cache_get_field_float(i, "housePosY");
-		HouseData[i][housePos][2] = cache_get_field_float(i, "housePosZ");
-		HouseData[i][housePos][3] = cache_get_field_float(i, "housePosA");
-		HouseData[i][houseInt][0] = cache_get_field_float(i, "houseIntX");
-		HouseData[i][houseInt][1] = cache_get_field_float(i, "houseIntY");
-		HouseData[i][houseInt][2] = cache_get_field_float(i, "houseIntZ");
-		HouseData[i][houseInt][3] = cache_get_field_float(i, "houseIntA");
-		HouseData[i][houseInterior] = cache_get_field_int(i, "houseInterior");
-		HouseData[i][houseExterior] = cache_get_field_int(i, "houseExterior");
-		HouseData[i][houseExteriorVW] = cache_get_field_int(i, "houseExteriorVW");
-        HouseData[i][houseLocked] = cache_get_field_int(i, "houseLocked");
-        HouseData[i][houseMoney] = cache_get_field_int(i, "houseMoney");
+		HouseData[i][housePos][0] = cache_get_value_float(i, "housePosX");
+		HouseData[i][housePos][1] = cache_get_value_float(i, "housePosY");
+		HouseData[i][housePos][2] = cache_get_value_float(i, "housePosZ");
+		HouseData[i][housePos][3] = cache_get_value_float(i, "housePosA");
+		HouseData[i][houseInt][0] = cache_get_value_float(i, "houseIntX");
+		HouseData[i][houseInt][1] = cache_get_value_float(i, "houseIntY");
+		HouseData[i][houseInt][2] = cache_get_value_float(i, "houseIntZ");
+		HouseData[i][houseInt][3] = cache_get_value_float(i, "houseIntA");
+		HouseData[i][houseInterior] = cache_get_value_int(i, "houseInterior");
+		HouseData[i][houseExterior] = cache_get_value_int(i, "houseExterior");
+		HouseData[i][houseExteriorVW] = cache_get_value_int(i, "houseExteriorVW");
+        HouseData[i][houseLocked] = cache_get_value_int(i, "houseLocked");
+        HouseData[i][houseMoney] = cache_get_value_int(i, "houseMoney");
 
         for (new j = 0; j < 10; j ++)
 		{
             format(str, 24, "houseWeapon%d", j + 1);
-            HouseData[i][houseWeapons][j] = cache_get_field_int(i, str);
+            HouseData[i][houseWeapons][j] = cache_get_value_int(i, str);
 
             format(str, 24, "houseAmmo%d", j + 1);
-            HouseData[i][houseAmmo][j] = cache_get_field_int(i, str);
+            HouseData[i][houseAmmo][j] = cache_get_value_int(i, str);
 		}
 		House_Refresh(i);
 	}
@@ -6839,42 +6765,40 @@ forward Car_Load();
 public Car_Load()
 {
 	static
-	    rows,
-	    fields,
 		str[128];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if (i < MAX_DYNAMIC_CARS)
 	{
 	    CarData[i][carExists] = true;
-	    CarData[i][carID] = cache_get_field_int(i, "carID");
-	    CarData[i][carModel] = cache_get_field_int(i, "carModel");
-	    CarData[i][carOwner] = cache_get_field_int(i, "carOwner");
-	    CarData[i][carPos][0] = cache_get_field_float(i, "carPosX");
-	    CarData[i][carPos][1] = cache_get_field_float(i, "carPosY");
-	    CarData[i][carPos][2] = cache_get_field_float(i, "carPosZ");
-	    CarData[i][carPos][3] = cache_get_field_float(i, "carPosR");
-	    CarData[i][carColor1] = cache_get_field_int(i, "carColor1");
-	    CarData[i][carColor2] = cache_get_field_int(i, "carColor2");
-	    CarData[i][carPaintjob] = cache_get_field_int(i, "carPaintjob");
-	    CarData[i][carLocked] = cache_get_field_int(i, "carLocked");
-	    CarData[i][carImpounded] = cache_get_field_int(i, "carImpounded");
-	    CarData[i][carImpoundPrice] = cache_get_field_int(i, "carImpoundPrice");
-        CarData[i][carFaction] = cache_get_field_int(i, "carFaction");
+	    CarData[i][carID] = cache_get_value_int(i, "carID");
+	    CarData[i][carModel] = cache_get_value_int(i, "carModel");
+	    CarData[i][carOwner] = cache_get_value_int(i, "carOwner");
+	    CarData[i][carPos][0] = cache_get_value_float(i, "carPosX");
+	    CarData[i][carPos][1] = cache_get_value_float(i, "carPosY");
+	    CarData[i][carPos][2] = cache_get_value_float(i, "carPosZ");
+	    CarData[i][carPos][3] = cache_get_value_float(i, "carPosR");
+	    CarData[i][carColor1] = cache_get_value_int(i, "carColor1");
+	    CarData[i][carColor2] = cache_get_value_int(i, "carColor2");
+	    CarData[i][carPaintjob] = cache_get_value_int(i, "carPaintjob");
+	    CarData[i][carLocked] = cache_get_value_int(i, "carLocked");
+	    CarData[i][carImpounded] = cache_get_value_int(i, "carImpounded");
+	    CarData[i][carImpoundPrice] = cache_get_value_int(i, "carImpoundPrice");
+        CarData[i][carFaction] = cache_get_value_int(i, "carFaction");
 
 		for (new j = 0; j < 14; j ++)
 		{
 		    if (j < 5)
 		    {
 		        format(str, sizeof(str), "carWeapon%d", j + 1);
-		        CarData[i][carWeapons][j] = cache_get_field_int(i, str);
+		        CarData[i][carWeapons][j] = cache_get_value_int(i, str);
 
 		        format(str, sizeof(str), "carAmmo%d", j + 1);
-		        CarData[i][carAmmo][j] = cache_get_field_int(i, str);
+		        CarData[i][carAmmo][j] = cache_get_value_int(i, str);
 	        }
 	        format(str, sizeof(str), "carMod%d", j + 1);
-	        CarData[i][carMods][j] = cache_get_field_int(i, str);
+	        CarData[i][carMods][j] = cache_get_value_int(i, str);
 	    }
 	    Car_Spawn(i);
 	}
@@ -7168,16 +7092,12 @@ public RepairCar(playerid, vehicleid)
 forward Business_LoadCars(bizid);
 public Business_LoadCars(bizid)
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i != rows; i ++) {
-		DealershipCars[bizid][i][vehID] = cache_get_field_int(i, "vehID");
-		DealershipCars[bizid][i][vehModel] = cache_get_field_int(i, "vehModel");
-		DealershipCars[bizid][i][vehPrice] = cache_get_field_int(i, "vehPrice");
+		DealershipCars[bizid][i][vehID] = cache_get_value_int(i, "vehID");
+		DealershipCars[bizid][i][vehModel] = cache_get_value_int(i, "vehModel");
+		DealershipCars[bizid][i][vehPrice] = cache_get_value_int(i, "vehPrice");
 	}
 	return 1;
 }
@@ -7186,26 +7106,24 @@ forward OnLoadFurniture(houseid);
 public OnLoadFurniture(houseid)
 {
 	static
-	    rows,
-	    fields,
 		id = -1;
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i != rows; i ++) if ((id = Furniture_GetFreeID()) != -1) {
 	    FurnitureData[id][furnitureExists] = true;
 	    FurnitureData[id][furnitureHouse] = houseid;
 
-	    cache_get_field_content(i, "furnitureName", FurnitureData[id][furnitureName], g_iHandle, 32);
+	    cache_get_value(i, "furnitureName", FurnitureData[id][furnitureName], 32);
 
-	    FurnitureData[id][furnitureID] = cache_get_field_int(i, "furnitureID");
-	    FurnitureData[id][furnitureModel] = cache_get_field_int(i, "furnitureModel");
-	    FurnitureData[id][furniturePos][0] = cache_get_field_float(i, "furnitureX");
-	    FurnitureData[id][furniturePos][1] = cache_get_field_float(i, "furnitureY");
-	    FurnitureData[id][furniturePos][2] = cache_get_field_float(i, "furnitureZ");
-	    FurnitureData[id][furnitureRot][0] = cache_get_field_float(i, "furnitureRX");
-	    FurnitureData[id][furnitureRot][1] = cache_get_field_float(i, "furnitureRY");
-	    FurnitureData[id][furnitureRot][2] = cache_get_field_float(i, "furnitureRZ");
+	    FurnitureData[id][furnitureID] = cache_get_value_int(i, "furnitureID");
+	    FurnitureData[id][furnitureModel] = cache_get_value_int(i, "furnitureModel");
+	    FurnitureData[id][furniturePos][0] = cache_get_value_float(i, "furnitureX");
+	    FurnitureData[id][furniturePos][1] = cache_get_value_float(i, "furnitureY");
+	    FurnitureData[id][furniturePos][2] = cache_get_value_float(i, "furnitureZ");
+	    FurnitureData[id][furnitureRot][0] = cache_get_value_float(i, "furnitureRX");
+	    FurnitureData[id][furnitureRot][1] = cache_get_value_float(i, "furnitureRY");
+	    FurnitureData[id][furnitureRot][2] = cache_get_value_float(i, "furnitureRZ");
 
 	    Furniture_Refresh(id);
 	}
@@ -7327,19 +7245,17 @@ forward OnLoadCarStorage(carid);
 public OnLoadCarStorage(carid)
 {
 	static
-	    rows,
-	    fields,
 		str[32];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i != rows; i ++) {
 		CarStorage[carid][i][cItemExists] = true;
-		CarStorage[carid][i][cItemID] = cache_get_field_int(i, "itemID");
-		CarStorage[carid][i][cItemModel] = cache_get_field_int(i, "itemModel");
-		CarStorage[carid][i][cItemQuantity] = cache_get_field_int(i, "itemQuantity");
+		CarStorage[carid][i][cItemID] = cache_get_value_int(i, "itemID");
+		CarStorage[carid][i][cItemModel] = cache_get_value_int(i, "itemModel");
+		CarStorage[carid][i][cItemQuantity] = cache_get_value_int(i, "itemQuantity");
 
-		cache_get_field_content(i, "itemName", str, g_iHandle, sizeof(str));
+		cache_get_value(i, "itemName", str, sizeof(str));
 		strpack(CarStorage[carid][i][cItemName], str, 32 char);
 	}
 	return 1;
@@ -7349,19 +7265,17 @@ forward OnLoadStorage(houseid);
 public OnLoadStorage(houseid)
 {
 	static
-	    rows,
-	    fields,
 		str[32];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i != rows; i ++) {
 		HouseStorage[houseid][i][hItemExists] = true;
-		HouseStorage[houseid][i][hItemID] = cache_get_field_int(i, "itemID");
-		HouseStorage[houseid][i][hItemModel] = cache_get_field_int(i, "itemModel");
-		HouseStorage[houseid][i][hItemQuantity] = cache_get_field_int(i, "itemQuantity");
+		HouseStorage[houseid][i][hItemID] = cache_get_value_int(i, "itemID");
+		HouseStorage[houseid][i][hItemModel] = cache_get_value_int(i, "itemModel");
+		HouseStorage[houseid][i][hItemQuantity] = cache_get_value_int(i, "itemQuantity");
 
-		cache_get_field_content(i, "itemName", str, g_iHandle, sizeof(str));
+		cache_get_value(i, "itemName", str, sizeof(str));
 		strpack(HouseStorage[houseid][i][hItemName], str, 32 char);
 	}
 	return 1;
@@ -7371,20 +7285,18 @@ forward OnLoadBackpack(id);
 public OnLoadBackpack(id)
 {
 	static
-	    rows,
-	    fields,
 		itemid = -1;
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i != rows; i ++) if ((itemid = Backpack_GetFreeItem()) != -1) {
 		BackpackItems[itemid][bItemExists] = true;
 		BackpackItems[itemid][bItemBackpack] = id;
-		BackpackItems[itemid][bItemID] = cache_get_field_int(i, "itemID");
-		BackpackItems[itemid][bItemModel] = cache_get_field_int(i, "itemModel");
-		BackpackItems[itemid][bItemQuantity] = cache_get_field_int(i, "itemQuantity");
+		BackpackItems[itemid][bItemID] = cache_get_value_int(i, "itemID");
+		BackpackItems[itemid][bItemModel] = cache_get_value_int(i, "itemModel");
+		BackpackItems[itemid][bItemQuantity] = cache_get_value_int(i, "itemQuantity");
 
-		cache_get_field_content(i, "itemName", BackpackItems[itemid][bItemName], g_iHandle, 32);
+		cache_get_value(i, "itemName", BackpackItems[itemid][bItemName], 32);
 	}
 	return 1;
 }
@@ -8901,22 +8813,20 @@ forward Pump_Load(bizid);
 public Pump_Load(bizid)
 {
 	static
-	    rows,
-	    fields,
 		id = -1;
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	for (new i = 0; i < rows; i ++) if ((id = Pump_GetFreeID()) != -1)
 	{
 	    PumpData[id][pumpExists] = true;
 	    PumpData[id][pumpBusiness] = bizid;
-	    PumpData[id][pumpID] = cache_get_field_int(i, "pumpID");
-	    PumpData[id][pumpPos][0] = cache_get_field_float(i, "pumpPosX");
-	    PumpData[id][pumpPos][1] = cache_get_field_float(i, "pumpPosY");
-	    PumpData[id][pumpPos][2] = cache_get_field_float(i, "pumpPosZ");
-	    PumpData[id][pumpPos][3] = cache_get_field_float(i, "pumpPosA");
-	    PumpData[id][pumpFuel] = cache_get_field_int(i, "pumpFuel");
+	    PumpData[id][pumpID] = cache_get_value_int(i, "pumpID");
+	    PumpData[id][pumpPos][0] = cache_get_value_float(i, "pumpPosX");
+	    PumpData[id][pumpPos][1] = cache_get_value_float(i, "pumpPosY");
+	    PumpData[id][pumpPos][2] = cache_get_value_float(i, "pumpPosZ");
+	    PumpData[id][pumpPos][3] = cache_get_value_float(i, "pumpPosA");
+	    PumpData[id][pumpFuel] = cache_get_value_int(i, "pumpFuel");
 
 	    PumpData[id][pumpObject] = CreateDynamicObject(1676, PumpData[id][pumpPos][0], PumpData[id][pumpPos][1], PumpData[id][pumpPos][2], 0.0, 0.0, PumpData[id][pumpPos][3]);
 	    Pump_Refresh(id);
@@ -13359,11 +13269,7 @@ public OnObjectMoved(objectid)
 forward OnQueryExecute(playerid, query[]);
 public OnQueryExecute(playerid, query[])
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (strfind(query, "SELECT", true) != -1)
 		Dialog_Show(playerid, ExecuteQuery, DIALOG_STYLE_INPUT, "Execute Query", "Success: MySQL returned %d rows from your query.\n\nPlease specify the MySQL query to execute below:", "Execute", "Back", rows);
@@ -13396,10 +13302,6 @@ public OnQueryFinished(extraid, threadid)
 	if (!IsPlayerConnected(extraid))
 	    return 0;
 
-	static
-	    rows,
-	    fields
-	;
 	switch (threadid)
 	{
 	    case THREAD_CREATE_CHAR:
@@ -13414,7 +13316,7 @@ public OnQueryFinished(extraid, threadid)
 	    }
 		case THREAD_CHECK_ACCOUNT:
 		{
-		    cache_get_data(rows, fields, g_iHandle);
+		    new rows = cache_num_rows();
 
 		    if (rows)
 			{
@@ -13433,7 +13335,7 @@ public OnQueryFinished(extraid, threadid)
     	}
     	case THREAD_LOGIN:
    		{
-    	    cache_get_data(rows, fields, g_iHandle);
+    	    new rows = cache_num_rows();
 
     	    if (!rows)
     	    {
@@ -13466,10 +13368,10 @@ public OnQueryFinished(extraid, threadid)
 		}
 		case THREAD_CHARACTERS:
 		{
-			cache_get_data(rows, fields, g_iHandle);
+			new rows = cache_num_rows();
 
 			for (new i = 0; i < rows; i ++) {
-			    cache_get_field_content(i, "Character", PlayerCharacters[extraid][i], g_iHandle, MAX_PLAYER_NAME);
+			    cache_get_value(i, "Character", PlayerCharacters[extraid][i], MAX_PLAYER_NAME);
 		    }
 		    SendServerMessage(extraid, "You have authenticated into your account successfully.");
             ShowCharacterMenu(extraid);
@@ -13479,7 +13381,7 @@ public OnQueryFinished(extraid, threadid)
 		    static
 		        string[128];
 
-		    cache_get_data(rows, fields, g_iHandle);
+		    new rows = cache_num_rows();
 
 			foreach (new i : Player)
 			{
@@ -13502,78 +13404,78 @@ public OnQueryFinished(extraid, threadid)
 					static
 					    query[128]
 					;
-			        PlayerData[extraid][pID] = cache_get_field_int(0, "ID");
-			        PlayerData[extraid][pCreated] = cache_get_field_int(0, "Created");
-			        PlayerData[extraid][pGender] = cache_get_field_int(0, "Gender");
+			        PlayerData[extraid][pID] = cache_get_value_int(0, "ID");
+			        PlayerData[extraid][pCreated] = cache_get_value_int(0, "Created");
+			        PlayerData[extraid][pGender] = cache_get_value_int(0, "Gender");
 
-					cache_get_field_content(0, "Birthdate", PlayerData[extraid][pBirthdate], g_iHandle, 24);
-			        cache_get_field_content(0, "Origin", PlayerData[extraid][pOrigin], g_iHandle, 32);
+					cache_get_value(0, "Birthdate", PlayerData[extraid][pBirthdate], 24);
+			        cache_get_value(0, "Origin", PlayerData[extraid][pOrigin], 32);
 
-			        PlayerData[extraid][pSkin] = cache_get_field_int(0, "Skin");
-			        PlayerData[extraid][pPos][0] = cache_get_field_float(0, "PosX");
-			        PlayerData[extraid][pPos][1] = cache_get_field_float(0, "PosY");
-			        PlayerData[extraid][pPos][2] = cache_get_field_float(0, "PosZ");
-			        PlayerData[extraid][pPos][3] = cache_get_field_float(0, "PosA");
-			        PlayerData[extraid][pHealth] = cache_get_field_float(0, "Health");
-			        PlayerData[extraid][pInterior] = cache_get_field_int(0, "Interior");
-			        PlayerData[extraid][pWorld] = cache_get_field_int(0, "World");
-			        PlayerData[extraid][pHospital] = cache_get_field_int(0, "Hospital");
-                    PlayerData[extraid][pHospitalInt] = cache_get_field_int(0, "HospitalInt");
-			        PlayerData[extraid][pMoney] = cache_get_field_int(0, "Money");
-			        PlayerData[extraid][pBankMoney] = cache_get_field_int(0, "BankMoney");
-			        PlayerData[extraid][pOwnsBillboard] = cache_get_field_int(0, "OwnsBillboard");
-					PlayerData[extraid][pSavings] = cache_get_field_int(0, "Savings");
-			        PlayerData[extraid][pAdmin] = cache_get_field_int(0, "Admin");
-			        PlayerData[extraid][pJailTime] = cache_get_field_int(0, "JailTime");
-			        PlayerData[extraid][pMuted] = cache_get_field_int(0, "Muted");
-			        PlayerData[extraid][pTester] = cache_get_field_int(0, "Tester");
-			        PlayerData[extraid][pHouse] = cache_get_field_int(0, "House");
-			        PlayerData[extraid][pBusiness] = cache_get_field_int(0, "Business");
-			        PlayerData[extraid][pEntrance] = cache_get_field_int(0, "Entrance");
-			        PlayerData[extraid][pPhone] = cache_get_field_int(0, "Phone");
-			        PlayerData[extraid][pLottery] = cache_get_field_int(0, "Lottery");
-			        PlayerData[extraid][pLottery] = cache_get_field_int(0, "LotteryB");
-			        PlayerData[extraid][pHunger] = cache_get_field_int(0, "Hunger");
-			        PlayerData[extraid][pThirst] = cache_get_field_int(0, "Thirst");
-			        PlayerData[extraid][pPlayingHours] = cache_get_field_int(0, "PlayingHours");
-			        PlayerData[extraid][pMinutes] = cache_get_field_int(0, "Minutes");
-			        PlayerData[extraid][pArmorStatus] = cache_get_field_float(0, "ArmorStatus");
-			        PlayerData[extraid][pJob] = cache_get_field_int(0, "Job");
-			        PlayerData[extraid][pFactionID] = cache_get_field_int(0, "Faction");
-			        PlayerData[extraid][pFactionRank] = cache_get_field_int(0, "FactionRank");
-			        PlayerData[extraid][pPrisoned] = cache_get_field_int(0, "Prisoned");
-			        PlayerData[extraid][pInjured] = cache_get_field_int(0, "Injured");
-			        PlayerData[extraid][pWarrants] = cache_get_field_int(0, "Warrants");
-			        PlayerData[extraid][pChannel] = cache_get_field_int(0, "Channel");
-			        PlayerData[extraid][pBleeding] = cache_get_field_int(0, "Bleeding");
-			        PlayerData[extraid][pAdminHide] = cache_get_field_int(0, "AdminHide");
-			        PlayerData[extraid][pWarnings] = cache_get_field_int(0, "Warnings");
-			        PlayerData[extraid][pMaskID] = cache_get_field_int(0, "MaskID");
-			        PlayerData[extraid][pFactionMod] = cache_get_field_int(0, "FactionMod");
-			        PlayerData[extraid][pCapacity] = cache_get_field_int(0, "Capacity");
-			        PlayerData[extraid][pSpawnPoint] = cache_get_field_int(0, "SpawnPoint");
+			        PlayerData[extraid][pSkin] = cache_get_value_int(0, "Skin");
+			        PlayerData[extraid][pPos][0] = cache_get_value_float(0, "PosX");
+			        PlayerData[extraid][pPos][1] = cache_get_value_float(0, "PosY");
+			        PlayerData[extraid][pPos][2] = cache_get_value_float(0, "PosZ");
+			        PlayerData[extraid][pPos][3] = cache_get_value_float(0, "PosA");
+			        PlayerData[extraid][pHealth] = cache_get_value_float(0, "Health");
+			        PlayerData[extraid][pInterior] = cache_get_value_int(0, "Interior");
+			        PlayerData[extraid][pWorld] = cache_get_value_int(0, "World");
+			        PlayerData[extraid][pHospital] = cache_get_value_int(0, "Hospital");
+                    PlayerData[extraid][pHospitalInt] = cache_get_value_int(0, "HospitalInt");
+			        PlayerData[extraid][pMoney] = cache_get_value_int(0, "Money");
+			        PlayerData[extraid][pBankMoney] = cache_get_value_int(0, "BankMoney");
+			        PlayerData[extraid][pOwnsBillboard] = cache_get_value_int(0, "OwnsBillboard");
+					PlayerData[extraid][pSavings] = cache_get_value_int(0, "Savings");
+			        PlayerData[extraid][pAdmin] = cache_get_value_int(0, "Admin");
+			        PlayerData[extraid][pJailTime] = cache_get_value_int(0, "JailTime");
+			        PlayerData[extraid][pMuted] = cache_get_value_int(0, "Muted");
+			        PlayerData[extraid][pTester] = cache_get_value_int(0, "Tester");
+			        PlayerData[extraid][pHouse] = cache_get_value_int(0, "House");
+			        PlayerData[extraid][pBusiness] = cache_get_value_int(0, "Business");
+			        PlayerData[extraid][pEntrance] = cache_get_value_int(0, "Entrance");
+			        PlayerData[extraid][pPhone] = cache_get_value_int(0, "Phone");
+			        PlayerData[extraid][pLottery] = cache_get_value_int(0, "Lottery");
+			        PlayerData[extraid][pLottery] = cache_get_value_int(0, "LotteryB");
+			        PlayerData[extraid][pHunger] = cache_get_value_int(0, "Hunger");
+			        PlayerData[extraid][pThirst] = cache_get_value_int(0, "Thirst");
+			        PlayerData[extraid][pPlayingHours] = cache_get_value_int(0, "PlayingHours");
+			        PlayerData[extraid][pMinutes] = cache_get_value_int(0, "Minutes");
+			        PlayerData[extraid][pArmorStatus] = cache_get_value_float(0, "ArmorStatus");
+			        PlayerData[extraid][pJob] = cache_get_value_int(0, "Job");
+			        PlayerData[extraid][pFactionID] = cache_get_value_int(0, "Faction");
+			        PlayerData[extraid][pFactionRank] = cache_get_value_int(0, "FactionRank");
+			        PlayerData[extraid][pPrisoned] = cache_get_value_int(0, "Prisoned");
+			        PlayerData[extraid][pInjured] = cache_get_value_int(0, "Injured");
+			        PlayerData[extraid][pWarrants] = cache_get_value_int(0, "Warrants");
+			        PlayerData[extraid][pChannel] = cache_get_value_int(0, "Channel");
+			        PlayerData[extraid][pBleeding] = cache_get_value_int(0, "Bleeding");
+			        PlayerData[extraid][pAdminHide] = cache_get_value_int(0, "AdminHide");
+			        PlayerData[extraid][pWarnings] = cache_get_value_int(0, "Warnings");
+			        PlayerData[extraid][pMaskID] = cache_get_value_int(0, "MaskID");
+			        PlayerData[extraid][pFactionMod] = cache_get_value_int(0, "FactionMod");
+			        PlayerData[extraid][pCapacity] = cache_get_value_int(0, "Capacity");
+			        PlayerData[extraid][pSpawnPoint] = cache_get_value_int(0, "SpawnPoint");
 
-					cache_get_field_content(0, "Warn1", PlayerData[extraid][pWarn1], g_iHandle, 32);
-					cache_get_field_content(0, "Warn2", PlayerData[extraid][pWarn2], g_iHandle, 32);
+					cache_get_value(0, "Warn1", PlayerData[extraid][pWarn1], 32);
+					cache_get_value(0, "Warn2", PlayerData[extraid][pWarn2], 32);
 
 			        for (new i = 0; i < 13; i ++) {
 			            format(query, sizeof(query), "Gun%d", i + 1);
-			            PlayerData[extraid][pGuns][i] = cache_get_field_int(0, query);
+			            PlayerData[extraid][pGuns][i] = cache_get_value_int(0, query);
 
 			            format(query, sizeof(query), "Ammo%d", i + 1);
-			            PlayerData[extraid][pAmmo][i] = cache_get_field_int(0, query);
+			            PlayerData[extraid][pAmmo][i] = cache_get_value_int(0, query);
 			        }
-			        PlayerData[extraid][pGlasses] = cache_get_field_int(0, "Glasses");
-					PlayerData[extraid][pHat] = cache_get_field_int(0, "Hat");
-					PlayerData[extraid][pBandana] = cache_get_field_int(0, "Bandana");
+			        PlayerData[extraid][pGlasses] = cache_get_value_int(0, "Glasses");
+					PlayerData[extraid][pHat] = cache_get_value_int(0, "Hat");
+					PlayerData[extraid][pBandana] = cache_get_value_int(0, "Bandana");
 
-					cache_get_field_content(0, "GlassesPos", string, g_iHandle);
+					cache_get_value(0, "GlassesPos", string);
 					sscanf(string, "p<|>fffffffff", AccessoryData[extraid][0][0], AccessoryData[extraid][0][1], AccessoryData[extraid][0][2], AccessoryData[extraid][0][3], AccessoryData[extraid][0][4], AccessoryData[extraid][0][5], AccessoryData[extraid][0][6], AccessoryData[extraid][0][7], AccessoryData[extraid][0][8]);
 
-					cache_get_field_content(0, "HatPos", string, g_iHandle);
+					cache_get_value(0, "HatPos", string);
 					sscanf(string, "p<|>fffffffff", AccessoryData[extraid][1][0], AccessoryData[extraid][1][1], AccessoryData[extraid][1][2], AccessoryData[extraid][1][3], AccessoryData[extraid][1][4], AccessoryData[extraid][1][5], AccessoryData[extraid][1][6], AccessoryData[extraid][1][7], AccessoryData[extraid][1][8]);
 
-					cache_get_field_content(0, "BandanaPos", string, g_iHandle);
+					cache_get_value(0, "BandanaPos", string);
 					sscanf(string, "p<|>fffffffff", AccessoryData[extraid][2][0], AccessoryData[extraid][2][1], AccessoryData[extraid][2][2], AccessoryData[extraid][2][3], AccessoryData[extraid][2][4], AccessoryData[extraid][2][5], AccessoryData[extraid][2][6], AccessoryData[extraid][2][7], AccessoryData[extraid][2][8]);
 
 					if (!PlayerData[extraid][pMaskID])
@@ -13656,7 +13558,7 @@ public OnQueryFinished(extraid, threadid)
 		}
 		case THREAD_VERIFY_PASS:
 		{
-		    cache_get_data(rows, fields, g_iHandle);
+		    new rows = cache_num_rows();
 
 		    if (rows)
 				Dialog_Show(extraid, NewPass, DIALOG_STYLE_PASSWORD, "Enter New Password", "Please enter your new password below.\n\nNote: Please use a strong and safe password for additional security.", "Change", "Cancel");
@@ -13669,7 +13571,7 @@ public OnQueryFinished(extraid, threadid)
 		    static
 		        query[128];
 
-			cache_get_data(rows, fields, g_iHandle);
+			new rows = cache_num_rows();
 
 			if (rows)
 			{
@@ -13692,55 +13594,54 @@ public OnQueryFinished(extraid, threadid)
 		    static
 		        name[32];
 
-		    cache_get_data(rows, fields, g_iHandle);
+		    new rows = cache_num_rows();
 
 			for (new i = 0; i < rows && i < MAX_INVENTORY; i ++) {
 			    InventoryData[extraid][i][invExists] = true;
-			    InventoryData[extraid][i][invID] = cache_get_field_int(i, "invID");
-			    InventoryData[extraid][i][invModel] = cache_get_field_int(i, "invModel");
-                InventoryData[extraid][i][invQuantity] = cache_get_field_int(i, "invQuantity");
+			    InventoryData[extraid][i][invID] = cache_get_value_int(i, "invID");
+			    InventoryData[extraid][i][invModel] = cache_get_value_int(i, "invModel");
+                InventoryData[extraid][i][invQuantity] = cache_get_value_int(i, "invQuantity");
 
-				cache_get_field_content(i, "invItem", name, g_iHandle, sizeof(name));
+				cache_get_value(i, "invItem", name, sizeof(name));
 				strpack(InventoryData[extraid][i][invItem], name, 32 char);
 			}
 		}
 		case THREAD_LOAD_CONTACTS:
 		{
-		    cache_get_data(rows, fields, g_iHandle);
+		   new rows = cache_num_rows();
 
 			for (new i = 0; i < rows && i < MAX_CONTACTS; i ++) {
-				cache_get_field_content(i, "contactName", ContactData[extraid][i][contactName], g_iHandle, 32);
+				cache_get_value(i, "contactName", ContactData[extraid][i][contactName], 32);
 
 				ContactData[extraid][i][contactExists] = true;
-			    ContactData[extraid][i][contactID] = cache_get_field_int(i, "contactID");
-			    ContactData[extraid][i][contactNumber] = cache_get_field_int(i, "contactNumber");
+			    ContactData[extraid][i][contactID] = cache_get_value_int(i, "contactID");
+			    ContactData[extraid][i][contactNumber] = cache_get_value_int(i, "contactNumber");
 			}
 		}
 		case THREAD_LOAD_LOCATIONS:
 		{
-		    cache_get_data(rows, fields, g_iHandle);
+		    new rows = cache_num_rows();
 
 			for (new i = 0; i < rows && i < MAX_GPS_LOCATIONS; i ++) {
-				cache_get_field_content(i, "locationName", LocationData[extraid][i][locationName], g_iHandle, 32);
+				cache_get_value(i, "locationName", LocationData[extraid][i][locationName], 32);
 
 				LocationData[extraid][i][locationExists] = true;
-			    LocationData[extraid][i][locationID] = cache_get_field_int(i, "locationID");
-			    LocationData[extraid][i][locationPos][0] = cache_get_field_float(i, "locationX");
-			    LocationData[extraid][i][locationPos][1] = cache_get_field_float(i, "locationY");
-			    LocationData[extraid][i][locationPos][2] = cache_get_field_float(i, "locationZ");
+			    LocationData[extraid][i][locationID] = cache_get_value_int(i, "locationID");
+			    LocationData[extraid][i][locationPos][0] = cache_get_value_float(i, "locationX");
+			    LocationData[extraid][i][locationPos][1] = cache_get_value_float(i, "locationY");
+			    LocationData[extraid][i][locationPos][2] = cache_get_value_float(i, "locationZ");
 			}
 		}
 		case THREAD_LOAD_TICKETS:
 		{
-		    cache_get_data(rows, fields, g_iHandle);
-
+			new rows = cache_num_rows();
 			for (new i = 0; i < rows && i < MAX_PLAYER_TICKETS; i ++) {
-				cache_get_field_content(i, "ticketReason", TicketData[extraid][i][ticketReason], g_iHandle, 64);
-				cache_get_field_content(i, "ticketDate", TicketData[extraid][i][ticketDate], g_iHandle, 36);
+				cache_get_value(i, "ticketReason", TicketData[extraid][i][ticketReason], 64);
+				cache_get_value(i, "ticketDate", TicketData[extraid][i][ticketDate], 36);
 
 				TicketData[extraid][i][ticketExists] = true;
-			    TicketData[extraid][i][ticketID] = cache_get_field_int(i, "ticketID");
-			    TicketData[extraid][i][ticketFee] = cache_get_field_int(i, "ticketFee");
+			    TicketData[extraid][i][ticketID] = cache_get_value_int(i, "ticketID");
+			    TicketData[extraid][i][ticketFee] = cache_get_value_int(i, "ticketFee");
 			}
 		}
 		case THREAD_BAN_LOOKUP:
@@ -13750,12 +13651,11 @@ public OnQueryFinished(extraid, threadid)
 				date[36],
 				username[24];
 
-		    cache_get_data(rows, fields, g_iHandle);
-
+			new rows = cache_num_rows();
 		    if (rows) {
-		        cache_get_field_content(0, "Username", username, g_iHandle);
-		        cache_get_field_content(0, "Date", date, g_iHandle);
-				cache_get_field_content(0, "Reason", reason, g_iHandle);
+		        cache_get_value(0, "Username", username, g_iHandle);
+		        cache_get_value(0, "Date", date, g_iHandle);
+				cache_get_value(0, "Reason", reason, g_iHandle);
 
 				if (!strcmp(username, "null", true) || !username[0])
 				{
@@ -13771,7 +13671,7 @@ public OnQueryFinished(extraid, threadid)
 		}
 		case THREAD_SHOW_CHARACTER:
 		{
-			cache_get_data(rows, fields, g_iHandle);
+			new rows = cache_num_rows();
 
 			if (rows)
 			{
@@ -13781,10 +13681,10 @@ public OnQueryFinished(extraid, threadid)
 			        origin[32],
 					string[128];
 
-			    skin = cache_get_field_int(0, "Skin");
+			    skin = cache_get_value_int(0, "Skin");
 
-				cache_get_field_content(0, "Birthdate", birthdate, g_iHandle);
-				cache_get_field_content(0, "Origin", origin, g_iHandle);
+				cache_get_value(0, "Birthdate", birthdate, g_iHandle);
+				cache_get_value(0, "Origin", origin, g_iHandle);
 
 				PlayerTextDrawSetPreviewModel(extraid, PlayerData[extraid][pTextdraws][73], skin);
 
@@ -13800,10 +13700,10 @@ public OnQueryFinished(extraid, threadid)
 				format(string, sizeof(string), "~b~Origin:~w~ %s", origin);
 				PlayerTextDrawSetString(extraid, PlayerData[extraid][pTextdraws][75], string);
 
-				format(string, sizeof(string), "~b~Creation:~w~ %s", GetDuration(gettime() - cache_get_field_int(0, "CreateDate")));
+				format(string, sizeof(string), "~b~Creation:~w~ %s", GetDuration(gettime() - cache_get_value_int(0, "CreateDate")));
 				PlayerTextDrawSetString(extraid, PlayerData[extraid][pTextdraws][76], string);
 
-				format(string, sizeof(string), "~b~Played:~w~ %s", GetDuration(gettime() - cache_get_field_int(0, "LastLogin")));
+				format(string, sizeof(string), "~b~Played:~w~ %s", GetDuration(gettime() - cache_get_value_int(0, "LastLogin")));
 				PlayerTextDrawSetString(extraid, PlayerData[extraid][pTextdraws][77], string);
 
 				for (new i = 0; i < 8; i ++) {
@@ -13824,11 +13724,7 @@ public OnViewCharges(extraid, name[])
 	if (GetFactionType(extraid) != FACTION_POLICE)
 	    return 0;
 
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (!rows)
 	    return SendErrorMessage(extraid, "No results found for charges on \"%s\".", name);
@@ -13841,8 +13737,8 @@ public OnViewCharges(extraid, name[])
 	string[0] = 0;
 
 	for (new i = 0; i < rows; i ++) {
-	    cache_get_field_content(i, "Description", desc, g_iHandle);
-	    cache_get_field_content(i, "Date", date, g_iHandle);
+	    cache_get_value(i, "Description", desc, g_iHandle);
+	    cache_get_value(i, "Date", date, g_iHandle);
 
 	    format(string, sizeof(string), "%s%s (%s)\n", string, desc, date);
 	}
@@ -13886,11 +13782,9 @@ forward OnResolveUsername(extraid, character[]);
 public OnResolveUsername(extraid, character[])
 {
     new
-		rows,
-		fields,
 		name[24];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (!rows)
  		return SendErrorMessage(extraid, "There is no account linked with the specified name.");
@@ -13908,11 +13802,9 @@ public OnLoginDate(extraid, username[])
 	    return 0;
 
 	static
-	    rows,
-	    fields,
 	    date[36];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (rows) {
 	    cache_get_row(0, 0, date, g_iHandle);
@@ -13975,16 +13867,14 @@ public OnBanLookup(playerid, username[])
 	    return 0;
 
 	static
-	    rows,
-	    fields,
 	    reason[128],
 	    date[36];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (rows) {
-	    cache_get_field_content(0, "Reason", reason, g_iHandle);
-	    cache_get_field_content(0, "Date", date, g_iHandle);
+	    cache_get_value(0, "Reason", reason, g_iHandle);
+	    cache_get_value(0, "Date", date, g_iHandle);
 
 		SendServerMessage(playerid, "%s was banned on %s, reason: %s", username, date, reason);
 	}
@@ -13997,11 +13887,7 @@ public OnBanLookup(playerid, username[])
 forward OnVerifyNameChange(playerid, newname[]);
 public OnVerifyNameChange(playerid, newname[])
 {
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (rows)
 	    return SendErrorMessage(playerid, "The specified name \"%s\" is already in use.", newname);
@@ -14021,20 +13907,18 @@ forward OnDeleteCharacter(playerid, name[]);
 public OnDeleteCharacter(playerid, name[])
 {
 	static
-	    rows,
-	    fields,
 		query[128],
 		id = -1;
 
-    cache_get_data(rows, fields, g_iHandle);
+    new rows = cache_num_rows();
 
 	if (!rows)
 	    return SendErrorMessage(playerid, "The character \"%s\" is not linked under any accounts.", name);
 
-	if (cache_get_field_int(0, "Admin") > PlayerData[playerid][pAdmin])
+	if (cache_get_value_int(0, "Admin") > PlayerData[playerid][pAdmin])
 	    return SendErrorMessage(playerid, "You are not authorized to delete a higher admin's character.");
 
-	id = cache_get_field_int(0, "ID");
+	id = cache_get_value_int(0, "ID");
 
 	if (id) {
 	    format(query, sizeof(query), "DELETE FROM `contacts` WHERE `ID` = '%d'", id);
@@ -14061,11 +13945,9 @@ forward OnDeleteAccount(playerid, name[]);
 public OnDeleteAccount(playerid, name[])
 {
 	static
-	    rows,
-	    fields,
 		id = -1;
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (!rows)
 	    return SendErrorMessage(playerid, "The username \"%s\" doesn't exist.", name);
@@ -14075,7 +13957,7 @@ public OnDeleteAccount(playerid, name[])
 
 	for (new i = 0; i < rows; i ++)
 	{
-	    if ((id = cache_get_field_int(i, "ID")))
+	    if ((id = cache_get_value_int(i, "ID")))
 		{
 	        format(query, sizeof(query), "DELETE FROM `contacts` WHERE `ID` = '%d'", id);
 	        mysql_tquery(g_iHandle, query);
@@ -14106,11 +13988,7 @@ public OnNameChange(playerid, userid, newname[])
 	if (!IsPlayerConnected(playerid) || !IsPlayerConnected(userid))
 	    return 0;
 
-	static
-	    rows,
-	    fields;
-
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (rows)
 	    return SendErrorMessage(playerid, "The specified name \"%s\" is in use.", newname);
@@ -14391,11 +14269,9 @@ public OnCharacterLookup(extraid, id, character[])
 	    return 0;
 
 	static
-	    rows,
-	    fields,
 	    string[128];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (rows)
 	{
@@ -14405,11 +14281,11 @@ public OnCharacterLookup(extraid, id, character[])
 	        createDate,
 	        lastLogin;
 
-		admin = cache_get_field_int(0, "Admin");
-		skin = cache_get_field_int(0, "Skin");
+		admin = cache_get_value_int(0, "Admin");
+		skin = cache_get_value_int(0, "Skin");
 
-		createDate = cache_get_field_int(0, "CreateDate");
-		lastLogin = cache_get_field_int(0, "LastLogin");
+		createDate = cache_get_value_int(0, "CreateDate");
+		lastLogin = cache_get_value_int(0, "LastLogin");
 
 		format(string, sizeof(string), "~g~Name:~w~ %s~n~~g~Account:~w~ %s~n~~g~Created:~w~ %s~n~~g~Last Login:~w~ %s", character, (admin > 0) ? ("Admin") : ("Player"), GetDuration(gettime() - createDate), GetDuration(gettime() - lastLogin));
 		PlayerTextDrawSetString(extraid, PlayerData[extraid][pTextdraws][52], string);
@@ -14442,11 +14318,9 @@ public OnCharacterCheck(extraid, character[])
 	    return 0;
 
 	static
-	    rows,
-	    fields,
 		query[150];
 
-	cache_get_data(rows, fields, g_iHandle);
+	new rows = cache_num_rows();
 
 	if (rows)
 	{
@@ -15456,67 +15330,67 @@ public OnPlayerUseItem(playerid, itemid, name[])
 		EditDynamicObject(playerid, FurnitureData[furniture][furnitureObject]);
 	}
 	else if (!strcmp(name, "Magazine", true)) {
-	    cmd_usemag(playerid, "\1");
+	    alias:usemag("\1");
 	}
 	else if (!strcmp(name, "Boombox", true)) {
-	    cmd_boombox(playerid, "place");
+	    alias:boombox("place");
 	}
 	else if (!strcmp(name, "Backpack", true)) {
-	    cmd_backpack(playerid, "\1");
+	    alias:backpack("\1");
 	}
 	else if (!strcmp(name, "First Aid", true)) {
-        cmd_usekit(playerid, "\1");
+        alias:usekit("\1");
     }
     else if (!strcmp(name, "Cellphone", true)) {
-        cmd_phone(playerid, "\1");
+        alias:phone("\1");
     }
     else if (!strcmp(name, "Portable Radio", true)) {
         SendSyntaxMessage(playerid, "Use \"/pr [text]\" to chat with your radio.");
     }
     else if (!strcmp(name, "Fuel Can", true)) {
-        cmd_fill(playerid, "\1");
+        alias:fill("\1");
     }
     else if (!strcmp(name, "Repair Kit", true)) {
-        cmd_repair(playerid, "\1");
+        alias:repair("\1");
     }
     else if (!strcmp(name, "NOS Canister", true)) {
-        cmd_nitrous(playerid, "\1");
+        alias:nitrous("\1");
     }
     else if (!strcmp(name, "Spray Can", true)) {
-        cmd_paint(playerid, "\1");
+        alias:paint("\1");
     }
     else if (!strcmp(name, "GPS System", true)) {
-        cmd_gps(playerid, "\1");
+        alias:gps("\1");
     }
     else if (!strcmp(name, "Marijuana", true)) {
-        cmd_usedrug(playerid, "marijuana");
+        alias:usedrug("marijuana");
     }
     else if (!strcmp(name, "Cocaine", true)) {
-        cmd_usedrug(playerid, "cocaine");
+        alias:usedrug("cocaine");
     }
     else if (!strcmp(name, "Heroin", true)) {
-        cmd_usedrug(playerid, "heroin");
+        alias:usedrug("heroin");
     }
     else if (!strcmp(name, "Steroids", true)) {
-        cmd_usedrug(playerid, "steroids");
+        alias:usedrug("steroids");
     }
     else if (!strcmp(name, "Soda", true)) {
-        cmd_drink(playerid, "soda");
+        alias:drink("soda");
     }
     else if (!strcmp(name, "Water Bottle", true)) {
-        cmd_drink(playerid, "water");
+        alias:drink("water");
     }
     else if (!strcmp(name, "Frozen Pizza", true)) {
-        cmd_cook(playerid, "pizza");
+        alias:cook("pizza");
     }
     else if (!strcmp(name, "Frozen Burger", true)) {
-        cmd_cook(playerid, "burger");
+        alias:cook("burger");
     }
     else if (!strcmp(name, "Armored Vest", true)) {
-        cmd_vest(playerid, "\1");
+        alias:vest("\1");
     }
     else if (!strcmp(name, "Ammo Cartridge", true)) {
-        cmd_ammo(playerid, "\1");
+        alias:ammo("\1");
     }
     else if (!strcmp(name, "Colt 45", true)) {
         EquipWeapon(playerid, "Colt 45");
@@ -15558,13 +15432,13 @@ public OnPlayerUseItem(playerid, itemid, name[])
         EquipWeapon(playerid, "Katana");
     }
     else if (!strcmp(name, "Marijuana Seeds", true)) {
-        cmd_plant(playerid, "Weed");
+        alias:plant("Weed");
     }
     else if (!strcmp(name, "Cocaine Seeds", true)) {
-        cmd_plant(playerid, "Cocaine");
+        alias:plant("Cocaine");
     }
     else if (!strcmp(name, "Heroin Opium Seeds", true)) {
-        cmd_plant(playerid, "Heroin");
+        alias:plant("Heroin");
     }
     else if (!strcmp(name, "Cooked Pizza", true))
 	{
@@ -15779,7 +15653,7 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 
 	if (newkeys & KEY_CROUCH && IsPlayerInAnyVehicle(playerid))
 	{
-		cmd_open(playerid, "\1");
+		alias:open("\1");
 	}
 	if (newkeys & KEY_CROUCH && IsPlayerInRangeOfPoint(playerid, 1.5, -226.4219, 1408.4594, 26.7734) && PlayerData[playerid][pTutorialStage] == 1)
 	{
@@ -16297,7 +16171,7 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	    }
 	    if ((id = Gate_Nearest(playerid)) != -1)
 		{
-		    cmd_open(playerid, "\1");
+		    alias:open("\1");
 		}
 	    if ((id = House_Nearest(playerid)) != -1)
 	    {
@@ -21189,33 +21063,33 @@ public OnPlayerSpawn(playerid)
 	return 1;
 }
 
-public OnPlayerCommandReceived(playerid, cmdtext[])
-{
-	if (!SQL_IsLogged(playerid) || (PlayerData[playerid][pTutorial] > 0 || PlayerData[playerid][pTutorialStage] > 0 || PlayerData[playerid][pKilled] > 0 || PlayerData[playerid][pHospital] != -1))
-	    return 0;
+// public OnPlayerCommandReceived(playerid, cmdtext[])
+// {
+// 	if (!SQL_IsLogged(playerid) || (PlayerData[playerid][pTutorial] > 0 || PlayerData[playerid][pTutorialStage] > 0 || PlayerData[playerid][pKilled] > 0 || PlayerData[playerid][pHospital] != -1))
+// 	    return 0;
 
-	if (PlayerData[playerid][pMuted] && strfind(cmdtext, "/unmute", true) != 0)
- 	{
-	    SendErrorMessage(playerid, "You are muted by the system.");
-	    return 0;
-	}
-	if (PlayerData[playerid][pCommandCount] < 6)
-	{
-	    PlayerData[playerid][pCommandCount]++;
+// 	if (PlayerData[playerid][pMuted] && strfind(cmdtext, "/unmute", true) != 0)
+//  	{
+// 	    SendErrorMessage(playerid, "You are muted by the system.");
+// 	    return 0;
+// 	}
+// 	if (PlayerData[playerid][pCommandCount] < 6)
+// 	{
+// 	    PlayerData[playerid][pCommandCount]++;
 
-	    if (PlayerData[playerid][pCommandCount] == 6) {
-	        PlayerData[playerid][pCommandCount] = 0;
+// 	    if (PlayerData[playerid][pCommandCount] == 6) {
+// 	        PlayerData[playerid][pCommandCount] = 0;
 
-	        PlayerData[playerid][pMuted] = 1;
-	        PlayerData[playerid][pMuteTime] = 5;
+// 	        PlayerData[playerid][pMuted] = 1;
+// 	        PlayerData[playerid][pMuteTime] = 5;
 
-	        SendServerMessage(playerid, "You have been muted for spamming (5 seconds).");
-	        SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has been automatically muted for spamming.", ReturnName(playerid, 0));
-	        return 0;
-		}
-	}
-	return 1;
-}
+// 	        SendServerMessage(playerid, "You have been muted for spamming (5 seconds).");
+// 	        SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has been automatically muted for spamming.", ReturnName(playerid, 0));
+// 	        return 0;
+// 		}
+// 	}
+// 	return 1;
+// }
 
 public OnPlayerText(playerid, text[])
 {
@@ -21294,7 +21168,7 @@ public OnPlayerText(playerid, text[])
         		SendFactionMessageEx(FACTION_POLICE, COLOR_RADIO, "DESCRIPTION: %s", text);
 
 			    SendClientMessage(playerid, COLOR_LIGHTBLUE, "[OPERATOR]:{FFFFFF} We have alerted all units in the area.");
-			    cmd_hangup(playerid, "\1");
+			    alias:hangup("\1");
 
 			    SetFactionMarker(playerid, FACTION_POLICE, 0x00D700FF);
 			}
@@ -21304,7 +21178,7 @@ public OnPlayerText(playerid, text[])
        			SendFactionMessageEx(FACTION_MEDIC, COLOR_HOSPITAL, "DESCRIPTION: %s", text);
 
 			    SendClientMessage(playerid, COLOR_HOSPITAL, "[OPERATOR]:{FFFFFF} We have alerted all units in the area.");
-			    cmd_hangup(playerid, "\1");
+			    alias:hangup("\1");
 
 			    SetFactionMarker(playerid, FACTION_MEDIC, 0x00D700FF);
 			}
@@ -21318,7 +21192,7 @@ public OnPlayerText(playerid, text[])
 		            if (GetMoney(playerid) < 500)
 				    {
     	                SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} Sorry, you have insufficient funds to advertise right now.");
-					    cmd_hangup(playerid, "\1");
+					    alias:hangup("\1");
 					}
 					else
 					{
@@ -21332,7 +21206,7 @@ public OnPlayerText(playerid, text[])
 			    if (GetMoney(playerid) < 500)
 			    {
                     SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} Sorry, you have insufficient funds to advertise right now.");
-				    cmd_hangup(playerid, "\1");
+				    alias:hangup("\1");
 				}
 				else
 				{
@@ -21343,7 +21217,7 @@ public OnPlayerText(playerid, text[])
 				    strpack(PlayerData[playerid][pAdvertise], text, 128 char);
 
         	        SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} Your advertisement will be published shortly.");
-				    cmd_hangup(playerid, "\1");
+				    alias:hangup("\1");
 				}
 			}
 		}
@@ -23566,7 +23440,7 @@ Dialog:LockServer(playerid, response, listitem, inputtext[])
 		SendRconCommand(str);
 	    SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has locked the server (password: %s).", ReturnName(playerid, 0), inputtext);
 	}
-	else cmd_panel(playerid, "\1");
+	else alias:panel("\1");
 	return 1;
 }
 
@@ -23588,7 +23462,7 @@ Dialog:SetHostname(playerid, response, listitem, inputtext[])
 		SendRconCommand(str);
 	    SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has set the hostname to \"%s\".", ReturnName(playerid, 0), inputtext);
 	}
-	else cmd_panel(playerid, "\1");
+	else alias:panel("\1");
 	return 1;
 }
 
@@ -23608,7 +23482,7 @@ Dialog:ExecuteQuery(playerid, response, listitem, inputtext[])
 		PlayerData[playerid][pExecute] = 1;
 		mysql_tquery(g_iHandle, inputtext, "OnQueryExecute", "ds", playerid, inputtext);
 	}
-	else cmd_panel(playerid, "\1");
+	else alias:panel("\1");
 	return 1;
 }
 
@@ -24113,7 +23987,7 @@ Dialog:FindHouse(playerid, response, listitem, inputtext[])
 		}
         Dialog_Show(playerid, FindHouse, DIALOG_STYLE_INPUT, "Find House", "Error: No results found for \"%s\".\n\nPlease enter the address of the house below:", "Submit", "Cancel", inputtext);
 	}
-	else cmd_gps(playerid, "\1");
+	else alias:gps("\1");
 	return 1;
 }
 
@@ -24133,7 +24007,7 @@ Dialog:FindBusiness(playerid, response, listitem, inputtext[])
 			SendErrorMessage(playerid, "The GPS was unable to locate any business.");
 		}
 	}
-	else cmd_gps(playerid, "\1");
+	else alias:gps("\1");
 	return 1;
 }
 
@@ -24153,7 +24027,7 @@ Dialog:FindEntrance(playerid, response, listitem, inputtext[])
 			SendErrorMessage(playerid, "The GPS was unable to locate any entrance.");
 		}
 	}
-	else cmd_gps(playerid, "\1");
+	else alias:gps("\1");
 	return 1;
 }
 
@@ -24178,7 +24052,7 @@ Dialog:FindJob(playerid, response, listitem, inputtext[])
 			SendErrorMessage(playerid, "The GPS was unable to locate any job.");
 		}
 	}
-	else cmd_gps(playerid, "\1");
+	else alias:gps("\1");
 	return 1;
 }
 
@@ -24200,7 +24074,7 @@ Dialog:CustomLocations(playerid, response, listitem, inputtext[])
 			}
 		}
 	}
-	else cmd_gps(playerid, "\1");
+	else alias:gps("\1");
 	return 1;
 }
 
@@ -24240,7 +24114,7 @@ Dialog:AddLocation(playerid, response, listitem, inputtext[])
 		Location_Add(playerid, inputtext, fX, fY, fZ);
 		SendServerMessage(playerid, "You have added \"%s\" to your GPS.", inputtext);
 	}
-	else cmd_gps(playerid, "\1");
+	else alias:gps("\1");
 	return 1;
 }
 
@@ -24294,7 +24168,7 @@ Dialog:Warrants(playerid, response, listitem, inputtext[])
 		format(name, sizeof(name), "MDC: %s", name);
 		Dialog_Show(playerid, WarrantList, DIALOG_STYLE_LIST, name, "Track Player\nClear Warrants", "Select", "Back");
 	}
-	else cmd_mdc(playerid, "\1");
+	else alias:mdc("\1");
 	return 1;
 }
 
@@ -24352,7 +24226,7 @@ Dialog:ChargeName(playerid, response, listitem, inputtext[])
 		PlayerData[playerid][pMDCPlayer] = targetid;
 		Dialog_Show(playerid, PlaceCharge, DIALOG_STYLE_INPUT, "Place Charge", "Please enter the description of the crime committed by %s:", "Submit", "Back", ReturnName(PlayerData[playerid][pMDCPlayer], 0));
 	}
-	else cmd_mdc(playerid, "\1");
+	else alias:mdc("\1");
 	return 1;
 }
 
@@ -24371,12 +24245,12 @@ Dialog:PlaceCharge(playerid, response, listitem, inputtext[])
 	    AddWarrant(PlayerData[playerid][pMDCPlayer], playerid, inputtext);
 	    SendFactionMessage(PlayerData[playerid][pFaction], COLOR_RADIO, "RADIO: %s has placed a charge on %s for \"%s\".", ReturnName(playerid, 0), ReturnName(PlayerData[playerid][pMDCPlayer], 0), inputtext);
 
-	    cmd_mdc(playerid, "\1");
+	    alias:mdc("\1");
 	}
 	else
 	{
 	    PlayerData[playerid][pMDCPlayer] = INVALID_PLAYER_ID;
-	    cmd_mdc(playerid, "\1");
+	    alias:mdc("\1");
 	}
 	return 1;
 }
@@ -24438,7 +24312,7 @@ Dialog:ViewCharges(playerid, response, listitem, inputtext[])
 		    Dialog_Show(playerid, ViewCharges, DIALOG_STYLE_INPUT, "View Charges", "Error: Invalid user specified.\n\nPlease enter the name or ID of the player:", "Submit", "Back");
 		}
 	}
-	else cmd_mdc(playerid, "\1");
+	else alias:mdc("\1");
 	return 1;
 }
 
@@ -24589,7 +24463,7 @@ Dialog:LockerWeapons(playerid, response, listitem, inputtext[])
 	    }
 	}
 	else {
-	    cmd_flocker(playerid, "\1");
+	    alias:flocker("\1");
 	}
 	return 1;
 }
@@ -24856,7 +24730,7 @@ Dialog:JobList(playerid, response, listitem, inputtext[])
 
 Dialog:JobHelp(playerid, response, listitem, inputtext[])
 {
-	if (!response) cmd_joblist(playerid, "\1");
+	if (!response) alias:joblist("\1");
 	return 1;
 }
 
@@ -25010,7 +24884,7 @@ Dialog:ContactInfo(playerid, response, listitem, inputtext[])
 		    case 0:
 		    {
 		        format(string, 16, "%d", ContactData[playerid][id][contactNumber]);
-				cmd_call(playerid, string);
+				alias:call(string);
 		    }
 		    case 1:
 		    {
@@ -25047,7 +24921,7 @@ Dialog:Contacts(playerid, response, listitem, inputtext[])
 	    }
 	}
 	else {
-		cmd_phone(playerid, "\1");
+		alias:phone("\1");
 	}
 	for (new i = 0; i != MAX_CONTACTS; i ++) {
 	    ListedContacts[playerid][i] = -1;
@@ -25066,10 +24940,10 @@ Dialog:DialNumber(playerid, response, listitem, inputtext[])
 	        return Dialog_Show(playerid, DialNumber, DIALOG_STYLE_INPUT, "Dial Number", "Please enter the number that you wish to dial below:", "Dial", "Back");
 
         format(string, 16, "%d", strval(inputtext));
-		cmd_call(playerid, string);
+		alias:call(string);
 	}
 	else {
-		cmd_phone(playerid, "\1");
+		alias:phone("\1");
 	}
 	return 1;
 }
@@ -25090,7 +24964,7 @@ Dialog:SendText(playerid, response, listitem, inputtext[])
 		Dialog_Show(playerid, TextMessage, DIALOG_STYLE_INPUT, "Text Message", "Please enter the message to send to %s:", "Send", "Back", ReturnName(PlayerData[playerid][pContact], 0));
 	}
 	else {
-		cmd_phone(playerid, "\1");
+		alias:phone("\1");
 	}
 	return 1;
 }
@@ -25651,7 +25525,7 @@ Dialog:Bank(playerid, response, listitem, inputtext[])
 Dialog:FAQ1(playerid, response, listitem, inputtext[])
 {
 	if (!response)
-		cmd_faq(playerid, "\1");
+		alias:faq("\1");
 
 	return 1;
 }
@@ -25781,7 +25655,7 @@ Dialog:Inventory(playerid, response, listitem, inputtext[])
 	                return SendErrorMessage(playerid, "You can't drop items right now.");
 
 				else if (!strcmp(string, "Backpack"))
-					return cmd_dropbackpack(playerid, "\1");
+					return alias:dropbackpack("\1");
 
 				else if ((id = Garbage_Nearest(playerid)) != -1)
 				{
@@ -27484,7 +27358,7 @@ Dialog:ChangePassword(playerid, response, listitem, inputtext[])
 	if (response)
 	{
 	    if (isnull(inputtext))
-	        return cmd_changepass(playerid, "\1");
+	        return alias:changepass("\1");
 
 		static
 		    buffer[129],
@@ -27754,28 +27628,28 @@ CMD:o(playerid, params[])
 }
 
 CMD:radio(playerid, params[])
-	return cmd_r(playerid, params);
+	return alias:r(params);
 
 CMD:ooc(playerid, params[])
-	return cmd_o(playerid, params);
+	return alias:o(params);
 
 CMD:f(playerid, params[])
-	return cmd_fac(playerid, params);
+	return alias:fac(params);
 
 CMD:megaphone(playerid, params[])
-	return cmd_m(playerid, params);
+	return alias:m(params);
 
 CMD:shout(playerid, params[])
-	return cmd_s(playerid, params);
+	return alias:s(params);
 
 CMD:low(playerid, params[])
-	return cmd_l(playerid, params);
+	return alias:l(params);
 
 CMD:admin(playerid, params[])
-	return cmd_a(playerid, params);
+	return alias:a(params);
 
 CMD:w(playerid, params[])
-	return cmd_whisper(playerid, params);
+	return alias:whisper(params);
 
 
 CMD:help(playerid, params[])
@@ -32271,7 +32145,7 @@ CMD:phone(playerid, params[])
 	return 1;
 }
 CMD:sms(playerid, params[])
-	return cmd_text(playerid, params);
+	return alias:text(params);
 
 CMD:text(playerid, params[])
 {
@@ -39044,14 +38918,14 @@ CMD:call(playerid, params[])
 
 		if (PlayerData[playerid][pPlayingHours] < 4) {
             SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} Sorry, you must play 4 hours to place an advertisement.");
-		    cmd_hangup(playerid, "\1");
+		    alias:hangup("\1");
 		}
 		else if (PlayerData[playerid][pAdTime] < 1) {
 			SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} Please say \"yes\" if you wish to advertise for $500.");
 		}
 		else {
 		    SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} You've already advertised in the last 2 minutes. Please try again later.");
-		    cmd_hangup(playerid, "\1");
+		    alias:hangup("\1");
 		}
 	}
 	else if (number == 223)
@@ -39062,7 +38936,7 @@ CMD:call(playerid, params[])
 
 		if (PlayerData[playerid][pPlayingHours] < 4) {
             SendClientMessage(playerid, COLOR_CYAN, "[OPERATOR]:{FFFFFF} Sorry, you must play 4 hours to rent a billboard.");
-		    cmd_hangup(playerid, "\1");
+		    alias:hangup("\1");
 		}
 		SendClientMessageEx(playerid, COLOR_YELLOW, "[PHONE]:{FFFFFF} Hello, this is the Los Santos Billboard Agency, please listen to the following choices!");
 		ViewBillboards(playerid);
